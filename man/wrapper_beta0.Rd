@@ -7,6 +7,7 @@
 wrapper_beta0(
   beta0.lk,
   beta.lk,
+  sigma.lk,
   nu.lk,
   gamma.lk,
   hyper.mu.beta0,
@@ -19,6 +20,8 @@ wrapper_beta0(
 \item{beta0.lk}{Initial beta0 parameter}
 
 \item{beta.lk}{Beta parameter}
+
+\item{sigma.lk}{sigma parameter}
 
 \item{nu.lk}{Nu parameter}
 

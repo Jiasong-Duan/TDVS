@@ -8,6 +8,7 @@ TDVS_EM(
   dataXY,
   init_beta = rep(1, 8),
   init_beta0 = 1,
+  init_sigma = 1,
   init_nu = 1,
   init_gamma = 1,
   init_theta = 0.5,
@@ -15,6 +16,8 @@ TDVS_EM(
   SS_t1 = 1,
   hyper_mu_beta0 = 0,
   hyper_sigma_beta0 = 1e+06,
+  hyper_nu_sigma = 4,
+  hyper_A_sigma = 50,
   hyper_mu_nu = 1,
   hyper_sigma_nu = 1,
   hyper_c_gamma = 1e-04,
@@ -34,6 +37,8 @@ TDVS_EM(
 
 \item{init_beta0}{Initial value for beta0 (default: 1)}
 
+\item{init_sigma}{Initial value for sigma (default: 1)}
+
 \item{init_nu}{Initial value for nu (default: 1)}
 
 \item{init_gamma}{Initial value for gamma (default: 1)}
@@ -47,6 +52,10 @@ TDVS_EM(
 \item{hyper_mu_beta0}{the mean hyperparameter in beta0's Normal prior (default: 0)}
 
 \item{hyper_sigma_beta0}{the variance hyperparameter in beta0's Normal prior (default: 1e6)}
+
+\item{hyper_nu_sigma}{the degree of freedom hyperparameter in sigma's half t prior (default: 4)}
+
+\item{hyper_A_sigma}{the scale hyperparameter in sigma's half t prior (default: 50)}
 
 \item{hyper_mu_nu}{the location hyperparameter in nu's log-normal prior (default: 1)}
 

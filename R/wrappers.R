@@ -1,22 +1,33 @@
 #' Dispatcher for beta optimization
 #'
-#' @param method Estimation function for beta (default: Quasi-Newton method implemented by R optim() function)
+#' @param beta Initial beta parameter
+#' @param beta0 Beta0 parameter
+#' @param sigma_b sigma parameter
+#' @param nu Nu parameter
+#' @param gamma_b Gamma parameter
+#' @param betaPRE Previous beta value
+#' @param t0 the "spike" hyperparameter in beta's spike-and-slab prior
+#' @param t1 the "slab" hyperparameter in beta's spike-and-slab prior
+#' @param Y_lk Response vector
+#' @param X_lk Predictor matrix
+#' @param theta_lk Theta parameter (default: number of predictors)
+#' @param method Estimation function for beta (default: Newton-Raphson method implemented by R nlm() function)
 #' @return Optimized beta parameter
 #' @export
-wrapper_beta <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk, method = getOption("TDVS_beta_method", "nlm")) {
+wrapper_beta <- function(beta, beta0, sigma_b, nu, gamma_b, betaPRE, t0, t1, Y_lk, X_lk, theta_lk, method = getOption("TDVS_beta_method", "nlm")) {
   method <- match.arg(method, c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"))
   if (method == "nlm") {
-    wrapper_beta_nlm(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+    wrapper_beta_nlm(beta, beta0, sigma_b, nu, gamma_b, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
   } else if (method == "optim") {
-    wrapper_beta_optim(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+    wrapper_beta_optim(beta, beta0, sigma_b, nu, gamma_b, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
   } else if (method == "maxLik") {
-    wrapper_beta_maxLik(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+    wrapper_beta_maxLik(beta, beta0, sigma_b, nu, gamma_b, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
   } else if (method == "cd_nlm"){
-    beta_coordinate_descent_cpp_nlm(beta_cd=beta, beta0_cd=beta0, nu_cd=nu, ga_cd=gamma,
+    beta_coordinate_descent_cpp_nlm(beta_cd=beta, beta0_cd=beta0, sigma_cd= sigma_b, nu_cd=nu, ga_cd=gamma_b,
                                        betaPRE, t0, t1, Y_cd=Y_lk, X_cd=X_lk, theta_cd=theta_lk,
                                        maX_cd_iter=2, tol=1e-6)
   } else if (method == "cd_maxLik"){
-    beta_coordinate_descent_cpp_maxLik(beta_cd=beta, beta0_cd=beta0, nu_cd=nu, ga_cd=gamma,
+    beta_coordinate_descent_cpp_maxLik(beta_cd=beta, beta0_cd=beta0, sigma_cd= sigma_b, nu_cd=nu, ga_cd=gamma_b,
                                        betaPRE, t0, t1, Y_cd=Y_lk, X_cd=X_lk, theta_cd=theta_lk,
                                        maX_cd_iter=2, tol=1e-6)
   }
@@ -26,8 +37,9 @@ wrapper_beta <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, th
 #'
 #' @param beta Initial beta parameter
 #' @param beta0 Beta0 parameter
+#' @param sigma_b sigma parameter
 #' @param nu Nu parameter
-#' @param gamma Gamma parameter
+#' @param gamma_b Gamma parameter
 #' @param betaPRE Previous beta value
 #' @param t0 the "spike" hyperparameter in beta's spike-and-slab prior
 #' @param t1 the "slab" hyperparameter in beta's spike-and-slab prior
@@ -36,10 +48,10 @@ wrapper_beta <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, th
 #' @param theta_lk Theta parameter (default: number of predictors)
 #' @return Optimized beta parameter
 #' @export
-wrapper_beta_optim <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-  func_lk <- function(x) beta_neg_lk_cpp(beta_lk=x, beta0_lk=beta0, nu_lk=nu, ga_lk=gamma, betaPRE=betaPRE,
+wrapper_beta_optim <- function(beta, beta0, sigma_b, nu, gamma_b, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+  func_lk <- function(x) beta_neg_lk_cpp(beta_lk=x, beta0_lk=beta0, sigma_lk= sigma_b, nu_lk=nu, ga_lk=gamma_b, betaPRE=betaPRE,
                                          t0=t0, t1=t1, Y_lk=Y_lk, X_lk=X_lk, theta_lk=theta_lk)
-  func_gradient <- function(x) beta_neg_gradient_cpp(beta_lk=x, beta0_lk=beta0, nu_lk=nu, ga_lk=gamma, betaPRE=betaPRE,
+  func_gradient <- function(x) beta_neg_gradient_cpp(beta_lk=x, beta0_lk=beta0, sigma_lk= sigma_b, nu_lk=nu, ga_lk=gamma_b, betaPRE=betaPRE,
                                                      t0=t0, t1=t1, Y_lk=Y_lk, X_lk=X_lk, theta_lk=theta_lk)
   result <- tryCatch(
     optim(par = beta, fn = func_lk, gr= func_gradient, method = "BFGS"),
@@ -55,8 +67,9 @@ wrapper_beta_optim <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_
 #'
 #' @param beta Initial beta parameter
 #' @param beta0 Beta0 parameter
+#' @param sigma_b sigma parameter
 #' @param nu Nu parameter
-#' @param gamma Gamma parameter
+#' @param gamma_b Gamma parameter
 #' @param betaPRE Previous beta value
 #' @param t0 the "spike" hyperparameter in beta's spike-and-slab prior
 #' @param t1 the "slab" hyperparameter in beta's spike-and-slab prior
@@ -65,8 +78,8 @@ wrapper_beta_optim <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_
 #' @param theta_lk Theta parameter (default: number of predictors)
 #' @return Optimized beta parameter
 #' @export
-wrapper_beta_nlm <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-  func_lk <- function(x) beta_neg_lk_cpp_nlm(beta_lk=x, beta0_lk=beta0, nu_lk=nu, ga_lk=gamma, betaPRE=betaPRE,
+wrapper_beta_nlm <- function(beta, beta0, sigma_b, nu, gamma_b, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+  func_lk <- function(x) beta_neg_lk_cpp_nlm(beta_lk=x, beta0_lk=beta0, sigma_lk= sigma_b, nu_lk=nu, ga_lk=gamma_b, betaPRE=betaPRE,
                                          t0=t0, t1=t1, Y_lk=Y_lk, X_lk=X_lk, theta_lk=theta_lk)
   result <- tryCatch(
     nlm(f = func_lk, p = beta, check.analyticals= FALSE),
@@ -82,8 +95,9 @@ wrapper_beta_nlm <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk
 #'
 #' @param beta Initial beta parameter
 #' @param beta0 Beta0 parameter
+#' @param sigma_b sigma parameter
 #' @param nu Nu parameter
-#' @param gamma Gamma parameter
+#' @param gamma_b Gamma parameter
 #' @param betaPRE Previous beta value
 #' @param t0 the "spike" hyperparameter in beta's spike-and-slab prior
 #' @param t1 the "slab" hyperparameter in beta's spike-and-slab prior
@@ -92,12 +106,12 @@ wrapper_beta_nlm <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk
 #' @param theta_lk Theta parameter (default: number of predictors)
 #' @return Optimized beta parameter
 #' @export
-wrapper_beta_maxLik <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-  func_lk <- function(x) -beta_neg_lk_cpp(beta_lk=x, beta0_lk=beta0, nu_lk=nu, ga_lk=gamma, betaPRE=betaPRE,
+wrapper_beta_maxLik <- function(beta, beta0, sigma_b, nu, gamma_b, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+  func_lk <- function(x) -beta_neg_lk_cpp(beta_lk=x, beta0_lk=beta0, sigma_lk= sigma_b, nu_lk=nu, ga_lk=gamma_b, betaPRE=betaPRE,
                                           t0=t0, t1=t1, Y_lk=Y_lk, X_lk=X_lk, theta_lk=theta_lk)
-  func_gradient <- function(x) -t(beta_neg_gradient_cpp(beta_lk=x, beta0_lk=beta0, nu_lk=nu, ga_lk=gamma, betaPRE=betaPRE,
+  func_gradient <- function(x) -t(beta_neg_gradient_cpp(beta_lk=x, beta0_lk=beta0, sigma_lk= sigma_b, nu_lk=nu, ga_lk=gamma_b, betaPRE=betaPRE,
                                                         t0=t0, t1=t1, Y_lk=Y_lk, X_lk=X_lk, theta_lk=theta_lk))
-  func_Hessian <- function(x) -beta_neg_hessian_cpp(beta_lk=x, beta0_lk=beta0, nu_lk=nu, ga_lk=gamma, betaPRE=betaPRE,
+  func_Hessian <- function(x) -beta_neg_hessian_cpp(beta_lk=x, beta0_lk=beta0, sigma_lk= sigma_b, nu_lk=nu, ga_lk=gamma_b, betaPRE=betaPRE,
                                                         t0=t0, t1=t1, Y_lk=Y_lk, X_lk=X_lk)
   result <- tryCatch(
     maxLik::maxLik(logLik = func_lk, grad = func_gradient, hess = func_Hessian, start = beta),
@@ -113,9 +127,10 @@ wrapper_beta_maxLik <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X
 #'
 #' @param j the index of beta to update
 #' @param beta Initial beta parameter
-#' @param beta0 Beta0 parameter
-#' @param nu Nu parameter
-#' @param gamma Gamma parameter
+#' @param beta0 beta0 parameter
+#' @param sigma_bcd sigma parameter
+#' @param nu nu parameter
+#' @param gamma_bcd gamma parameter
 #' @param betaPRE Previous beta value
 #' @param t0 the "spike" hyperparameter in beta's spike-and-slab prior
 #' @param t1 the "slab" hyperparameter in beta's spike-and-slab prior
@@ -124,16 +139,16 @@ wrapper_beta_maxLik <- function(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X
 #' @param theta_lk Theta parameter (default: number of predictors)
 #' @return Optimized beta parameter
 #' @export
-wrapper_beta_cd_maxLik <- function(j, beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk){
+wrapper_beta_cd_maxLik <- function(j, beta, beta0, sigma_bcd, nu, gamma_bcd, betaPRE, t0, t1, Y_lk, X_lk, theta_lk){
   func_lk <- function(x) -jbeta_neg_lk_cpp_maxLik(beta_j=x, j_index = j, beta_noj = beta[-j],
-                                                  beta0_lk=beta0, nu_lk=nu, ga_lk=gamma, betaPRE=betaPRE,
+                                                  beta0_lk=beta0, sigma_lk= sigma_bcd, nu_lk=nu, ga_lk=gamma_bcd, betaPRE=betaPRE,
                                                   t0=t0, t1=t1, Y_lk=Y_lk, X_lk=X_lk, theta_lk=theta_lk)
   func_gradient <- function(x) -jbeta_neg_gradient_cpp_maxLik(beta_j=x, j_index = j, beta_noj = beta[-j],
-                                                              beta0_lk = beta0, nu_lk = nu, ga_lk = gamma,
+                                                              beta0_lk = beta0, sigma_lk= sigma_bcd, nu_lk = nu, ga_lk = gamma_bcd,
                                                               betaPRE = betaPRE, t0 = t0, t1 = t1,
                                                               Y_lk=Y_lk, X_lk=X_lk, theta_lk=theta_lk)
   func_Hessian <- function(x) -jbeta_neg_hessian_cpp_maxLik(beta_j=x, j_index = j, beta_noj = beta[-j],
-                                                            beta0_lk = beta0, nu_lk = nu, ga_lk = gamma,
+                                                            beta0_lk = beta0, sigma_lk=sigma_bcd, nu_lk = nu, ga_lk = gamma_bcd,
                                                             Y_lk=Y_lk, X_lk=X_lk)
   result <- tryCatch(
     maxLik::maxLik(logLik = func_lk, grad = func_gradient, hess = func_Hessian, start = beta[j]),
@@ -149,9 +164,10 @@ wrapper_beta_cd_maxLik <- function(j, beta, beta0, nu, gamma, betaPRE, t0, t1, Y
 #'
 #' @param j the index of beta to update
 #' @param beta Initial beta parameter
-#' @param beta0 Beta0 parameter
-#' @param nu Nu parameter
-#' @param gamma Gamma parameter
+#' @param beta0 beta0 parameter
+#' @param sigma_bcd sigma parameter
+#' @param nu nu parameter
+#' @param gamma_bcd gamma parameter
 #' @param betaPRE Previous beta value
 #' @param t0 the "spike" hyperparameter in beta's spike-and-slab prior
 #' @param t1 the "slab" hyperparameter in beta's spike-and-slab prior
@@ -160,10 +176,10 @@ wrapper_beta_cd_maxLik <- function(j, beta, beta0, nu, gamma, betaPRE, t0, t1, Y
 #' @param theta_lk Theta parameter (default: number of predictors)
 #' @return Optimized beta parameter
 #' @export
-wrapper_beta_cd_nlm <- function(j, beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk){
+wrapper_beta_cd_nlm <- function(j, beta, beta0, sigma_bcd, nu, gamma_bcd, betaPRE, t0, t1, Y_lk, X_lk, theta_lk){
   func_lk <- function(x) jbeta_neg_lk_cpp_nlm(beta_j=x, j_index = j, beta_noj = beta[-j],
-                                                  beta0_lk=beta0, nu_lk=nu, ga_lk=gamma, betaPRE=betaPRE,
-                                                  t0=t0, t1=t1, Y_lk=Y_lk, X_lk=X_lk, theta_lk=theta_lk)
+                                              beta0_lk=beta0, sigma_lk= sigma_bcd, nu_lk=nu, ga_lk=gamma_bcd,
+                                              betaPRE=betaPRE, t0=t0, t1=t1, Y_lk=Y_lk, X_lk=X_lk, theta_lk=theta_lk)
   result <- tryCatch(
     nlm(f = func_lk, p = beta[j], check.analyticals= FALSE),
     error = function(e) {
@@ -178,6 +194,7 @@ wrapper_beta_cd_nlm <- function(j, beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk
 #'
 #' @param beta0.lk Initial beta0 parameter
 #' @param beta.lk Beta parameter
+#' @param sigma.lk sigma parameter
 #' @param nu.lk Nu parameter
 #' @param gamma.lk Gamma parameter
 #' @param hyper.mu.beta0 the mean hyperparameter in beta0's Normal prior
@@ -186,8 +203,8 @@ wrapper_beta_cd_nlm <- function(j, beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk
 #' @param X.lk Predictor matrix
 #' @return Optimized beta0 parameter
 #' @export
-wrapper_beta0 <- function(beta0.lk, beta.lk, nu.lk, gamma.lk, hyper.mu.beta0, hyper.sigma.beta0, Y.lk, X.lk){
-  func <- function(x) beta0_neg_lk_cpp(beta0_lk=x, beta_lk=beta.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
+wrapper_beta0 <- function(beta0.lk, beta.lk, sigma.lk, nu.lk, gamma.lk, hyper.mu.beta0, hyper.sigma.beta0, Y.lk, X.lk){
+  func <- function(x) beta0_neg_lk_cpp(beta0_lk=x, beta_lk=beta.lk, sigma_lk= sigma.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
                                        hyper_mu_beta0= hyper.mu.beta0, hyper_sigma_beta0= hyper.sigma.beta0, Y_lk=Y.lk, X_lk=X.lk)
   result <- tryCatch(
     optim(par = beta0.lk, fn = func, method = "BFGS"),
@@ -199,17 +216,43 @@ wrapper_beta0 <- function(beta0.lk, beta.lk, nu.lk, gamma.lk, hyper.mu.beta0, hy
   return(result$par)
 }
 
+#' Wrapper function for sigma optimization
+#'
+#' @param sigma.lk Initial sigma parameter
+#' @param beta.lk Beta parameter
+#' @param beta0.lk beta0 parameter
+#' @param nu.lk Nu parameter
+#' @param gamma.lk Gamma parameter
+#' @param hyper.nu.sigma the degree of freedom hyperparameter in sigma's half t prior
+#' @param hyper.A.sigma the scale hyperparameter in sigma's half t prior
+#' @param Y.lk Response vector
+#' @param X.lk Predictor matrix
+#' @return Optimized beta0 parameter
+#' @export
+wrapper_sigma <- function(sigma.lk, beta0.lk, beta.lk, nu.lk, gamma.lk, hyper.nu.sigma, hyper.A.sigma, Y.lk, X.lk){
+  func <- function(x) sigma_neg_lk_cpp(sigma_lk= x, beta_lk= beta.lk, beta0_lk= beta0.lk, nu_lk= nu.lk, gamma_lk= gamma.lk,
+                                       hyper_nu_sigma= hyper.nu.sigma, hyper_A_sigma= hyper.A.sigma, Y_lk= Y.lk, X_lk= X.lk)
+  result <- tryCatch(
+    optim(par = sigma.lk, fn = func, method = "L-BFGS-B", lower = 0.01, upper = 100),
+    error = function(e) {
+      warning("beta0 optimization failed: ", conditionMessage(e))
+      list(par = NA)
+    }
+  )
+  return(result$par)
+}
+
 #' Wrapper function for nu optimization
 #'
 #' @param nu Initial nu parameter
-#' @param gamma Gamma parameter
+#' @param gamma_nu Gamma parameter
 #' @param error_lk Error vector
 #' @param hyper_mu the location hyperparameter in nu's log-normal prior
 #' @param hyper_sigma the scale hyperparameter in nu's log-normal prior
 #' @return Optimized nu parameter
 #' @export
-wrapper_nu <- function(nu, gamma, error_lk, hyper_mu, hyper_sigma) {
-  func <- function(x) nu_neg_lk_cpp(nu_lk=x, ga_lk=gamma, error_lk, hyper_mu, hyper_sigma)
+wrapper_nu <- function(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma) {
+  func <- function(x) nu_neg_lk_cpp(nu_lk=x, ga_lk=gamma_nu, error_lk, hyper_mu, hyper_sigma)
   result <- tryCatch(
     optim(par = nu, fn = func, method = "L-BFGS-B", lower = 0.01, upper = 100),
     error = function(e) {
@@ -222,17 +265,17 @@ wrapper_nu <- function(nu, gamma, error_lk, hyper_mu, hyper_sigma) {
 
 #' Wrapper function for gamma optimization
 #'
-#' @param gamma Initial gamma parameter
+#' @param gamma_upd Initial gamma parameter
 #' @param nu Nu parameter
 #' @param error_lk Error vector
 #' @param hyper_c the shape hyperparameter in gamma's gamma prior
 #' @param hyper_d the rate hyperparameter in gamma's gamma prior
 #' @return Optimized gamma parameter
 #' @export
-wrapper_gamma <- function(gamma, nu, error_lk, hyper_c, hyper_d) {
+wrapper_gamma <- function(gamma_upd, nu, error_lk, hyper_c, hyper_d) {
   func <- function(x) gamma_neg_lk_cpp(ga_lk=x, nu_lk=nu, error_lk, hyper_c, hyper_d)
   result <- tryCatch(
-    optim(par = gamma, fn = func, method = "L-BFGS-B", lower = 0.01, upper = 100),
+    optim(par = gamma_upd, fn = func, method = "L-BFGS-B", lower = 0.01, upper = 100),
     error = function(e) {
       warning("gamma optimization failed: ", conditionMessage(e))
       list(par = NA)
@@ -246,6 +289,7 @@ wrapper_gamma <- function(gamma, nu, error_lk, hyper_c, hyper_d) {
 #' @param dataXY List containing data X and Y
 #' @param init_beta Initial vector for beta (default: rep(1, number of predictors))
 #' @param init_beta0 Initial value for beta0 (default: 1)
+#' @param init_sigma Initial value for sigma (default: 1)
 #' @param init_nu Initial value for nu (default: 1)
 #' @param init_gamma Initial value for gamma (default: 1)
 #' @param init_theta Initial value for theta (default: 0.5)
@@ -253,6 +297,8 @@ wrapper_gamma <- function(gamma, nu, error_lk, hyper_c, hyper_d) {
 #' @param SS_t1 the "slab" hyperparameter in beta's spike-and-slab prior (default: 1)
 #' @param hyper_mu_beta0 the mean hyperparameter in beta0's Normal prior (default: 0)
 #' @param hyper_sigma_beta0 the variance hyperparameter in beta0's Normal prior (default: 1e6)
+#' @param hyper_nu_sigma the degree of freedom hyperparameter in sigma's half t prior (default: 4)
+#' @param hyper_A_sigma the scale hyperparameter in sigma's half t prior (default: 50)
 #' @param hyper_mu_nu the location hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_sigma_nu the scale hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_c_gamma the shape hyperparameter in gamma's gamma prior (default: 1e-4)
@@ -269,6 +315,7 @@ TDVS_EM <- function(
     dataXY,
     init_beta = rep(1,8),
     init_beta0 = 1,
+    init_sigma = 1,
     init_nu = 1,
     init_gamma = 1,
     init_theta = 0.5,
@@ -276,6 +323,8 @@ TDVS_EM <- function(
     SS_t1 = 1.0,
     hyper_mu_beta0 = 0,
     hyper_sigma_beta0 = 1e6,
+    hyper_nu_sigma = 4,
+    hyper_A_sigma = 50,
     hyper_mu_nu = 1,
     hyper_sigma_nu = 1,
     hyper_c_gamma = 0.0001,
@@ -297,6 +346,7 @@ TDVS_EM <- function(
     dataXY = dataXY,
     init_beta = init_beta,
     init_beta0 = init_beta0,
+    init_sigma = init_sigma,
     init_nu = init_nu,
     init_gamma = init_gamma,
     init_theta = init_theta,
@@ -304,6 +354,8 @@ TDVS_EM <- function(
     SS_t1 = SS_t1,
     hyper_mu_beta0 = hyper_mu_beta0,
     hyper_sigma_beta0 = hyper_sigma_beta0,
+    hyper_nu_sigma = hyper_nu_sigma,
+    hyper_A_sigma = hyper_A_sigma,
     hyper_mu_nu = hyper_mu_nu,
     hyper_sigma_nu = hyper_sigma_nu,
     hyper_c_gamma = hyper_c_gamma,
@@ -343,6 +395,7 @@ curvature_error <- function(err, nu_cur, ga_cur) {
 #' @param test_index Index of predictor to test
 #' @param beta_opt Optimized beta vector
 #' @param beta0_opt Optimized beta0 value
+#' @param sigma_opt Optimized sigma value
 #' @param nu_opt Optimized nu value
 #' @param ga_opt Optimized gamma value
 #' @param dataXY List containing data X and Y
@@ -352,6 +405,7 @@ curvature_error <- function(err, nu_cur, ga_cur) {
 CiS_j_fun <- function(test_index,
                       beta_opt,
                       beta0_opt,
+                      sigma_opt,
                       nu_opt,
                       ga_opt,
                       dataXY,
@@ -361,6 +415,7 @@ CiS_j_fun <- function(test_index,
     test_index = test_index,
     beta_opt = beta_opt,
     beta0_opt = beta0_opt,
+    sigma_opt = sigma_opt,
     nu_opt = nu_opt,
     ga_opt = ga_opt,
     dataXY = dataXY,
@@ -374,6 +429,7 @@ CiS_j_fun <- function(test_index,
 #' @param dataXY List containing data X and Y
 #' @param init_beta_per Initial vector for beta (default: rep(1, number of predictors))
 #' @param init_beta0_per Initial value for beta0 (default: 1)
+#' @param init_sigma_per Initial value for sigma (default: 1)
 #' @param init_nu_per Initial value for nu (default: 1)
 #' @param init_gamma_per Initial value for gamma (default: 1)
 #' @param init_theta_per Initial value for theta (default: 0.5)
@@ -381,6 +437,8 @@ CiS_j_fun <- function(test_index,
 #' @param SS_t1_per the "slab" hyperparameter in beta's spike-and-slab prior (default: 1)
 #' @param hyper_mu_beta0_per the mean hyperparameter in beta0's Normal prior (default: 0)
 #' @param hyper_sigma_beta0_per the variance hyperparameter in beta0's Normal prior (default: 1e6)
+#' @param hyper_nu_sigma_per the degree of freedom hyperparameter in sigma's half t prior (default: 4)
+#' @param hyper_A_sigma_per the scale hyperparameter in sigma's half t prior (default: 50)
 #' @param hyper_mu_nu_per the location hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_sigma_nu_per the scale hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_c_gamma_per the shape hyperparameter in gamma's gamma prior (default: 1e-4)
@@ -397,6 +455,7 @@ per_fun <- function(j_index,
                     dataXY,
                     init_beta_per = rep(1,8),
                     init_beta0_per = 1,
+                    init_sigma_per = 1,
                     init_nu_per = 1,
                     init_gamma_per = 1,
                     init_theta_per = 0.5,
@@ -404,6 +463,8 @@ per_fun <- function(j_index,
                     SS_t1_per = 1.0,
                     hyper_mu_beta0_per = 0,
                     hyper_sigma_beta0_per = 1e6,
+                    hyper_nu_sigma_per = 4,
+                    hyper_A_sigma_per = 50,
                     hyper_mu_nu_per = 1,
                     hyper_sigma_nu_per = 1,
                     hyper_c_gamma_per = 0.0001,
@@ -425,6 +486,7 @@ per_fun <- function(j_index,
     j_index = j_index,
     dataXY = dataXY,
     init_beta_per = init_beta_per,
+    init_sigma_per = init_sigma_per,
     init_beta0_per = init_beta0_per,
     init_nu_per = init_nu_per,
     init_gamma_per = init_gamma_per,
@@ -433,6 +495,8 @@ per_fun <- function(j_index,
     SS_t1_per = SS_t1_per,
     hyper_mu_beta0_per = hyper_mu_beta0_per,
     hyper_sigma_beta0_per = hyper_sigma_beta0_per,
+    hyper_nu_sigma_per = hyper_nu_sigma_per,
+    hyper_A_sigma_per = hyper_A_sigma_per,
     hyper_mu_nu_per = hyper_mu_nu_per,
     hyper_sigma_nu_per = hyper_sigma_nu_per,
     hyper_c_gamma_per = hyper_c_gamma_per,
@@ -450,6 +514,7 @@ per_fun <- function(j_index,
 #' @param test_indices Vector of indices of predictors to test
 #' @param beta_opt Optimized beta vector
 #' @param beta0_opt Optimized beta0 value
+#' @param sigma_opt Optimized sigma value
 #' @param nu_opt Optimized nu value
 #' @param ga_opt Optimized gamma value
 #' @param dataXY List containing data X and Y
@@ -459,6 +524,7 @@ per_fun <- function(j_index,
 CiS_group_fun <- function(test_indices,
                           beta_opt,
                           beta0_opt,
+                          sigma_opt,
                           nu_opt,
                           ga_opt,
                           dataXY,
@@ -468,6 +534,7 @@ CiS_group_fun <- function(test_indices,
     test_indices = test_indices,
     beta_opt = beta_opt,
     beta0_opt = beta0_opt,
+    sigma_opt = sigma_opt,
     nu_opt = nu_opt,
     ga_opt = ga_opt,
     dataXY = dataXY,
@@ -481,6 +548,7 @@ CiS_group_fun <- function(test_indices,
 #' @param dataXY List containing data X and Y
 #' @param init_beta_per Initial vector for beta (default: rep(1, number of predictors))
 #' @param init_beta0_per Initial value for beta0 (default: 1)
+#' @param init_sigma_per Initial value for sigma (default: 1)
 #' @param init_nu_per Initial value for nu (default: 1)
 #' @param init_gamma_per Initial value for gamma (default: 1)
 #' @param init_theta_per Initial value for theta (default: 0.5)
@@ -488,6 +556,8 @@ CiS_group_fun <- function(test_indices,
 #' @param SS_t1_per the "slab" hyperparameter in beta's spike-and-slab prior (default: 1)
 #' @param hyper_mu_beta0_per the mean hyperparameter in beta0's Normal prior (default: 0)
 #' @param hyper_sigma_beta0_per the variance hyperparameter in beta0's Normal prior (default: 1e6)
+#' @param hyper_nu_sigma_per the degree of freedom hyperparameter in sigma's half t prior (default: 4)
+#' @param hyper_A_sigma_per the scale hyperparameter in sigma's half t prior (default: 50)
 #' @param hyper_mu_nu_per the location hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_sigma_nu_per the scale hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_c_gamma_per the shape hyperparameter in gamma's gamma prior (default: 1e-4)
@@ -504,6 +574,7 @@ per_group_fun <- function(j_indices,
                           dataXY,
                           init_beta_per = rep(1,8),
                           init_beta0_per = 1,
+                          init_sigma_per =1,
                           init_nu_per = 1,
                           init_gamma_per = 1,
                           init_theta_per = 0.5,
@@ -511,6 +582,8 @@ per_group_fun <- function(j_indices,
                           SS_t1_per = 1.0,
                           hyper_mu_beta0_per = 0,
                           hyper_sigma_beta0_per = 1e6,
+                          hyper_nu_sigma_per = 4,
+                          hyper_A_sigma_per = 50,
                           hyper_mu_nu_per = 1,
                           hyper_sigma_nu_per = 1,
                           hyper_c_gamma_per = 0.0001,
@@ -533,6 +606,7 @@ per_group_fun <- function(j_indices,
     dataXY = dataXY,
     init_beta_per = init_beta_per,
     init_beta0_per = init_beta0_per,
+    init_sigma_per = init_sigma_per,
     init_nu_per = init_nu_per,
     init_gamma_per = init_gamma_per,
     init_theta_per = init_theta_per,
@@ -540,6 +614,8 @@ per_group_fun <- function(j_indices,
     SS_t1_per = SS_t1_per,
     hyper_mu_beta0_per = hyper_mu_beta0_per,
     hyper_sigma_beta0_per = hyper_sigma_beta0_per,
+    hyper_nu_sigma_per = hyper_nu_sigma_per,
+    hyper_A_sigma_per = hyper_A_sigma_per,
     hyper_mu_nu_per = hyper_mu_nu_per,
     hyper_sigma_nu_per = hyper_sigma_nu_per,
     hyper_c_gamma_per = hyper_c_gamma_per,
@@ -559,6 +635,7 @@ per_group_fun <- function(j_indices,
 #' @param B Number of iterations (default: 300)
 #' @param sig_cutoff Threshold used for significance cutoff in variable selection (default: 0.05)
 #' @param init_beta0_TDVS Initial value for beta0 (default: 1)
+#' @param init_sigma_TDVS Initial value for sigma (default: 1)
 #' @param init_nu_TDVS Initial value for nu (default: 1)
 #' @param init_gamma_TDVS Initial value for gamma (default: 1)
 #' @param init_theta_TDVS Initial value for theta (default: 0.5)
@@ -566,6 +643,8 @@ per_group_fun <- function(j_indices,
 #' @param SS_t1_TDVS the "slab" hyperparameter in beta's spike-and-slab prior (default: 1)
 #' @param hyper_mu_beta0_TDVS the mean hyperparameter in beta0's Normal prior (default: 0)
 #' @param hyper_sigma_beta0_TDVS the variance hyperparameter in beta0's Normal prior (default: 1e6)
+#' @param hyper_nu_sigma_TDVS the degree of freedom hyperparameter in sigma's half t prior (default: 4)
+#' @param hyper_A_sigma_TDVS the scale hyperparameter in sigma's half t prior (default: 50)
 #' @param hyper_mu_nu_TDVS the location hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_sigma_nu_TDVS the scale hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_c_gamma_TDVS the shape hyperparameter in gamma's gamma prior (default: 1e-4)
@@ -584,6 +663,7 @@ TDVS <- function(
     B = 300,
     sig_cutoff = 0.05,
     init_beta0_TDVS = 1,
+    init_sigma_TDVS =1,
     init_nu_TDVS = 1,
     init_gamma_TDVS = 1,
     init_theta_TDVS = 0.5,
@@ -591,6 +671,8 @@ TDVS <- function(
     SS_t1_TDVS = 1.0,
     hyper_mu_beta0_TDVS = 0,
     hyper_sigma_beta0_TDVS = 1e6,
+    hyper_nu_sigma_TDVS =4,
+    hyper_A_sigma_TDVS =50,
     hyper_mu_nu_TDVS = 1,
     hyper_sigma_nu_TDVS = 1,
     hyper_c_gamma_TDVS = 0.0001,
@@ -614,6 +696,7 @@ TDVS <- function(
     B = B,
     sig_cutoff = sig_cutoff,
     init_beta0_TDVS = init_beta0_TDVS,
+    init_sigma_TDVS = init_sigma_TDVS,
     init_nu_TDVS = init_nu_TDVS,
     init_gamma_TDVS = init_gamma_TDVS,
     init_theta_TDVS = init_theta_TDVS,
@@ -621,6 +704,8 @@ TDVS <- function(
     SS_t1_TDVS = SS_t1_TDVS,
     hyper_mu_beta0_TDVS = hyper_mu_beta0_TDVS,
     hyper_sigma_beta0_TDVS = hyper_sigma_beta0_TDVS,
+    hyper_nu_sigma_TDVS = hyper_nu_sigma_TDVS,
+    hyper_A_sigma_TDVS = hyper_A_sigma_TDVS,
     hyper_mu_nu_TDVS = hyper_mu_nu_TDVS,
     hyper_sigma_nu_TDVS = hyper_sigma_nu_TDVS,
     hyper_c_gamma_TDVS = hyper_c_gamma_TDVS,
@@ -641,6 +726,7 @@ TDVS <- function(
 #' @param B Number of iterations (default: 300)
 #' @param sig_cutoff Threshold used for significance cutoff in variable selection (default: 0.05)
 #' @param init_beta0_TDVS Initial value for beta0 (default: 1)
+#' @param init_sigma_TDVS Initial value for sigma (default: 1)
 #' @param init_nu_TDVS Initial value for nu (default: 1)
 #' @param init_gamma_TDVS Initial value for gamma (default: 1)
 #' @param init_theta_TDVS Initial value for theta (default: 0.5)
@@ -648,6 +734,8 @@ TDVS <- function(
 #' @param SS_t1_TDVS the "slab" hyperparameter in beta's spike-and-slab prior (default: 1)
 #' @param hyper_mu_beta0_TDVS the mean hyperparameter in beta0's Normal prior (default: 0)
 #' @param hyper_sigma_beta0_TDVS the variance hyperparameter in beta0's Normal prior (default: 1e6)
+#' @param hyper_nu_sigma_TDVS the degree of freedom hyperparameter in sigma's half t prior (default: 4)
+#' @param hyper_A_sigma_TDVS the scale hyperparameter in sigma's half t prior (default: 50)
 #' @param hyper_mu_nu_TDVS the location hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_sigma_nu_TDVS the scale hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_c_gamma_TDVS the shape hyperparameter in gamma's gamma prior (default: 1e-4)
@@ -667,6 +755,7 @@ TDVS_j <- function(
     B = 300,
     sig_cutoff = 0.05,
     init_beta0_TDVS = 1,
+    init_sigma_TDVS =1,
     init_nu_TDVS = 1,
     init_gamma_TDVS = 1,
     init_theta_TDVS = 0.5,
@@ -674,6 +763,8 @@ TDVS_j <- function(
     SS_t1_TDVS = 1.0,
     hyper_mu_beta0_TDVS = 0,
     hyper_sigma_beta0_TDVS = 1e6,
+    hyper_nu_sigma_TDVS =4,
+    hyper_A_sigma_TDVS =50,
     hyper_mu_nu_TDVS = 1,
     hyper_sigma_nu_TDVS = 1,
     hyper_c_gamma_TDVS = 0.0001,
@@ -698,6 +789,7 @@ TDVS_j <- function(
     B = B,
     sig_cutoff = sig_cutoff,
     init_beta0_TDVS = init_beta0_TDVS,
+    init_sigma_TDVS = init_sigma_TDVS,
     init_nu_TDVS = init_nu_TDVS,
     init_gamma_TDVS = init_gamma_TDVS,
     init_theta_TDVS = init_theta_TDVS,
@@ -705,6 +797,8 @@ TDVS_j <- function(
     SS_t1_TDVS = SS_t1_TDVS,
     hyper_mu_beta0_TDVS = hyper_mu_beta0_TDVS,
     hyper_sigma_beta0_TDVS = hyper_sigma_beta0_TDVS,
+    hyper_nu_sigma_TDVS = hyper_nu_sigma_TDVS,
+    hyper_A_sigma_TDVS = hyper_A_sigma_TDVS,
     hyper_mu_nu_TDVS = hyper_mu_nu_TDVS,
     hyper_sigma_nu_TDVS = hyper_sigma_nu_TDVS,
     hyper_c_gamma_TDVS = hyper_c_gamma_TDVS,
@@ -725,6 +819,7 @@ TDVS_j <- function(
 #' @param B Number of iterations (default: 300)
 #' @param sig_cutoff Threshold used for significance cutoff in variable selection (default: 0.05)
 #' @param init_beta0_TDVS Initial value for beta0 (default: 1)
+#' @param init_sigma_TDVS Initial value for sigma (default: 1)
 #' @param init_nu_TDVS Initial value for nu (default: 1)
 #' @param init_gamma_TDVS Initial value for gamma (default: 1)
 #' @param init_theta_TDVS Initial value for theta (default: 0.5)
@@ -732,6 +827,8 @@ TDVS_j <- function(
 #' @param SS_t1_TDVS the "slab" hyperparameter in beta's spike-and-slab prior (default: 1)
 #' @param hyper_mu_beta0_TDVS the mean hyperparameter in beta0's Normal prior (default: 0)
 #' @param hyper_sigma_beta0_TDVS the variance hyperparameter in beta0's Normal prior (default: 1e6)
+#' @param hyper_nu_sigma_TDVS the degree of freedom hyperparameter in sigma's half t prior (default: 4)
+#' @param hyper_A_sigma_TDVS the scale hyperparameter in sigma's half t prior (default: 50)
 #' @param hyper_mu_nu_TDVS the location hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_sigma_nu_TDVS the scale hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_c_gamma_TDVS the shape hyperparameter in gamma's gamma prior (default: 1e-4)
@@ -751,6 +848,7 @@ TDVS_group <- function(
     B = 300,
     sig_cutoff = 0.05,
     init_beta0_TDVS = 1,
+    init_sigma_TDVS =1,
     init_nu_TDVS = 1,
     init_gamma_TDVS = 1,
     init_theta_TDVS = 0.5,
@@ -758,6 +856,8 @@ TDVS_group <- function(
     SS_t1_TDVS = 1.0,
     hyper_mu_beta0_TDVS = 0,
     hyper_sigma_beta0_TDVS = 1e6,
+    hyper_nu_sigma_TDVS =4,
+    hyper_A_sigma_TDVS =50,
     hyper_mu_nu_TDVS = 1,
     hyper_sigma_nu_TDVS = 1,
     hyper_c_gamma_TDVS = 0.0001,
@@ -782,6 +882,7 @@ TDVS_group <- function(
     B = B,
     sig_cutoff = sig_cutoff,
     init_beta0_TDVS = init_beta0_TDVS,
+    init_sigma_TDVS = init_sigma_TDVS,
     init_nu_TDVS = init_nu_TDVS,
     init_gamma_TDVS = init_gamma_TDVS,
     init_theta_TDVS = init_theta_TDVS,
@@ -789,6 +890,8 @@ TDVS_group <- function(
     SS_t1_TDVS = SS_t1_TDVS,
     hyper_mu_beta0_TDVS = hyper_mu_beta0_TDVS,
     hyper_sigma_beta0_TDVS = hyper_sigma_beta0_TDVS,
+    hyper_nu_sigma_TDVS = hyper_nu_sigma_TDVS,
+    hyper_A_sigma_TDVS = hyper_A_sigma_TDVS,
     hyper_mu_nu_TDVS = hyper_mu_nu_TDVS,
     hyper_sigma_nu_TDVS = hyper_sigma_nu_TDVS,
     hyper_c_gamma_TDVS = hyper_c_gamma_TDVS,
@@ -813,6 +916,7 @@ TDVS_group <- function(
 #' @param sig_cutoff Threshold used for significance cutoff in variable selection (default: 0.05)
 #' @param group_size Size of groups (default: 4)
 #' @param init_beta0_TDVS Initial value for beta0 (default: 1)
+#' @param init_sigma_TDVS Initial value for sigma (default: 1)
 #' @param init_nu_TDVS Initial value for nu (default: 1)
 #' @param init_gamma_TDVS Initial value for gamma (default: 1)
 #' @param init_theta_TDVS Initial value for theta (default: 0.5)
@@ -820,6 +924,8 @@ TDVS_group <- function(
 #' @param SS_t1_TDVS the "slab" hyperparameter in beta's spike-and-slab prior (default: 1)
 #' @param hyper_mu_beta0_TDVS the mean hyperparameter in beta0's Normal prior (default: 0)
 #' @param hyper_sigma_beta0_TDVS the variance hyperparameter in beta0's Normal prior (default: 1e6)
+#' @param hyper_nu_sigma_TDVS the degree of freedom hyperparameter in sigma's half t prior (default: 4)
+#' @param hyper_A_sigma_TDVS the scale hyperparameter in sigma's half t prior (default: 50)
 #' @param hyper_mu_nu_TDVS the location hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_sigma_nu_TDVS the scale hyperparameter in nu's log-normal prior (default: 1)
 #' @param hyper_c_gamma_TDVS the shape hyperparameter in gamma's gamma prior (default: 1e-4)
@@ -843,6 +949,7 @@ TDVS_multi_stage <- function(
     sig_cutoff = 0.05,
     group_size = 4,
     init_beta0_TDVS = 1,
+    init_sigma_TDVS =1,
     init_nu_TDVS = 1,
     init_gamma_TDVS = 1,
     init_theta_TDVS = 0.5,
@@ -850,6 +957,8 @@ TDVS_multi_stage <- function(
     SS_t1_TDVS = 1.0,
     hyper_mu_beta0_TDVS = 0,
     hyper_sigma_beta0_TDVS = 1e6,
+    hyper_nu_sigma_TDVS =4,
+    hyper_A_sigma_TDVS =50,
     hyper_mu_nu_TDVS = 1,
     hyper_sigma_nu_TDVS = 1,
     hyper_c_gamma_TDVS = 0.0001,
@@ -878,6 +987,7 @@ TDVS_multi_stage <- function(
     sig_cutoff = sig_cutoff,
     group_size = group_size,
     init_beta0_TDVS = init_beta0_TDVS,
+    init_sigma_TDVS = init_sigma_TDVS,
     init_nu_TDVS = init_nu_TDVS,
     init_gamma_TDVS = init_gamma_TDVS,
     init_theta_TDVS = init_theta_TDVS,
@@ -885,6 +995,8 @@ TDVS_multi_stage <- function(
     SS_t1_TDVS = SS_t1_TDVS,
     hyper_mu_beta0_TDVS = hyper_mu_beta0_TDVS,
     hyper_sigma_beta0_TDVS = hyper_sigma_beta0_TDVS,
+    hyper_nu_sigma_TDVS = hyper_nu_sigma_TDVS,
+    hyper_A_sigma_TDVS = hyper_A_sigma_TDVS,
     hyper_mu_nu_TDVS = hyper_mu_nu_TDVS,
     hyper_sigma_nu_TDVS = hyper_sigma_nu_TDVS,
     hyper_c_gamma_TDVS = hyper_c_gamma_TDVS,

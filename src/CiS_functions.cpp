@@ -42,6 +42,7 @@ arma::vec curvature_error_cpp(const arma::vec& err, double nu_cur, double ga_cur
 double CiS_j_fun_cpp(int test_index,
                      const arma::vec& beta_opt,
                      double beta0_opt,
+                     double sigma_opt,
                      double nu_opt,
                      double ga_opt,
                      Rcpp::List dataXY,
@@ -60,7 +61,7 @@ double CiS_j_fun_cpp(int test_index,
     );
   }
 
-  arma::vec err_full = dat_Y - beta0_opt - dat_X * beta_opt;
+  arma::vec err_full = (dat_Y - beta0_opt - dat_X * beta_opt)/sigma_opt;
   arma::vec S_Prime_obs = arma::square(slope_error_cpp(err_full, ga_opt, nu_opt));
 
   //Rcpp::Rcout << "err_full: " << err_full << std::endl;
@@ -71,7 +72,7 @@ double CiS_j_fun_cpp(int test_index,
 
   //Rcpp::Rcout << "reduced_cols: " << reduced_cols << std::endl;
 
-  arma::vec err_reduced = dat_Y - beta0_opt - dat_X.cols(reduced_cols) * beta_opt.elem(reduced_cols);
+  arma::vec err_reduced = (dat_Y - beta0_opt - dat_X.cols(reduced_cols) * beta_opt.elem(reduced_cols))/sigma_opt;
   arma::vec S_j_obs = arma::square(slope_error_cpp(err_reduced, ga_opt, nu_opt));
   arma::vec Delta_j_obs = arma::abs(S_j_obs - S_Prime_obs);
 
@@ -88,6 +89,7 @@ double per_fun_cpp(int j_index,
                    Rcpp::List dataXY,
                    arma::vec init_beta_per,
                    double init_beta0_per,
+                   double init_sigma_per,
                    double init_nu_per,
                    double init_gamma_per,
                    double init_theta_per,
@@ -95,6 +97,8 @@ double per_fun_cpp(int j_index,
                    double SS_t1_per,
                    double hyper_mu_beta0_per,
                    double hyper_sigma_beta0_per,
+                   double hyper_nu_sigma_per,
+                   double hyper_A_sigma_per,
                    double hyper_mu_nu_per,
                    double hyper_sigma_nu_per,
                    double hyper_c_gamma_per,
@@ -103,8 +107,7 @@ double per_fun_cpp(int j_index,
                    double hyper_b_theta_per,
                    int max_iter_per,
                    double tol_per,
-                   double add_correc_CiS
-) {
+                   double add_correc_CiS) {
 
   arma::vec dat_Y = dataXY["Y"];
   arma::mat dat_X = dataXY["X"];
@@ -157,16 +160,18 @@ double per_fun_cpp(int j_index,
     Rcpp::Named("X") = dat_X
   );
 
-  Rcpp::List em_results_per_j = TDVS_EM_cpp(dat_per, init_beta_per, init_beta0_per, init_nu_per, init_gamma_per, init_theta_per,
-                                           SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_mu_nu_per, hyper_sigma_nu_per,
-                                           hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per);
+  Rcpp::List em_results_per_j = TDVS_EM_cpp(dat_per, init_beta_per, init_beta0_per, init_sigma_per, init_nu_per, init_gamma_per, init_theta_per,
+                                           SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per,
+                                           hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per,
+                                           hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per);
 
   arma::vec beta_per_j = em_results_per_j["beta"];
   double beta0_per_j = em_results_per_j["beta0"];
+  double sigma_per_j = em_results_per_j["sigma"];
   double nu_per_j = em_results_per_j["nu"];
   double ga_per_j = em_results_per_j["gamma"];
 
-  double CiS_j_per = CiS_j_fun_cpp(j_index, beta_per_j, beta0_per_j, nu_per_j, ga_per_j, dat_per);
+  double CiS_j_per = CiS_j_fun_cpp(j_index, beta_per_j, beta0_per_j, sigma_per_j, nu_per_j, ga_per_j, dat_per, add_correc_CiS);
   return CiS_j_per;
 }
 
@@ -175,6 +180,7 @@ double per_fun_cpp(int j_index,
 double CiS_group_fun_cpp(const arma::uvec& test_indices,
                          const arma::vec& beta_opt,
                          double beta0_opt,
+                         double sigma_opt,
                          double nu_opt,
                          double ga_opt,
                          Rcpp::List dataXY,
@@ -195,7 +201,7 @@ double CiS_group_fun_cpp(const arma::uvec& test_indices,
   //Rcpp::Rcout << "zero_based: " << zero_based << std::endl;
 
   // Compute full model errors and slope
-  arma::vec err_full = dat_Y - beta0_opt - dat_X * beta_opt;
+  arma::vec err_full = (dat_Y - beta0_opt - dat_X * beta_opt)/sigma_opt;
   arma::vec S_Prime_obs = arma::square(slope_error_cpp(err_full, ga_opt, nu_opt));
 
   // Determine columns to keep (exclude test_indices)
@@ -212,7 +218,7 @@ double CiS_group_fun_cpp(const arma::uvec& test_indices,
 
   //Rcpp::Rcout << "keep_cols: " << keep_cols << std::endl;
 
-  arma::vec err_reduced = dat_Y - beta0_opt - dat_X.cols(keep_cols) * beta_opt.elem(keep_cols);
+  arma::vec err_reduced = (dat_Y - beta0_opt - dat_X.cols(keep_cols) * beta_opt.elem(keep_cols))/sigma_opt;
   arma::vec S_j_obs = arma::square(slope_error_cpp(err_reduced, ga_opt, nu_opt));
   arma::vec Delta_j_obs = arma::abs(S_j_obs - S_Prime_obs);
 
@@ -227,6 +233,7 @@ double per_group_fun_cpp(const arma::uvec& j_indices,
                          Rcpp::List dataXY,
                          arma::vec init_beta_per,
                          double init_beta0_per,
+                         double init_sigma_per,
                          double init_nu_per,
                          double init_gamma_per,
                          double init_theta_per,
@@ -234,6 +241,8 @@ double per_group_fun_cpp(const arma::uvec& j_indices,
                          double SS_t1_per,
                          double hyper_mu_beta0_per,
                          double hyper_sigma_beta0_per,
+                         double hyper_nu_sigma_per,
+                         double hyper_A_sigma_per,
                          double hyper_mu_nu_per,
                          double hyper_sigma_nu_per,
                          double hyper_c_gamma_per,
@@ -270,17 +279,19 @@ double per_group_fun_cpp(const arma::uvec& j_indices,
   );
 
   // Run E-M algorithm
-  Rcpp::List em_results = TDVS_EM_cpp(dat_per, init_beta_per, init_beta0_per, init_nu_per, init_gamma_per, init_theta_per,
-                                     SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_mu_nu_per, hyper_sigma_nu_per,
-                                     hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per);
+  Rcpp::List em_results = TDVS_EM_cpp(dat_per, init_beta_per, init_beta0_per, init_sigma_per, init_nu_per, init_gamma_per, init_theta_per,
+                                     SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per,
+                                     hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per,
+                                     hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per);
 
   arma::vec beta_hat = em_results["beta"];
   double beta0_hat = em_results["beta0"];
+  double sigma_hat = em_results["sigma"];
   double nu_hat = em_results["nu"];
   double ga_hat = em_results["gamma"];
 
   // Evaluate the group effect
-  double CiS_group_per = CiS_group_fun_cpp(j_indices, beta_hat, beta0_hat, nu_hat, ga_hat, dat_per, add_correc_CiS);
+  double CiS_group_per = CiS_group_fun_cpp(j_indices, beta_hat, beta0_hat, sigma_hat, nu_hat, ga_hat, dat_per, add_correc_CiS);
 
   return CiS_group_per;
 }

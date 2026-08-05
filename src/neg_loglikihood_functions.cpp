@@ -12,7 +12,7 @@ using namespace arma;
 //
 // [[Rcpp::export]]
 double beta_neg_lk_cpp(
-    arma::vec beta_lk, double beta0_lk, double nu_lk, double ga_lk, arma::vec betaPRE, double t0, double t1,
+    arma::vec beta_lk, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk, arma::vec betaPRE, double t0, double t1,
     arma::vec Y_lk, arma::mat X_lk, double theta_lk) {
   // Get n and p
   int n = Y_lk.n_elem;
@@ -24,7 +24,7 @@ double beta_neg_lk_cpp(
     Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
   }
   // Compute residuals
-  arma::vec residuals = Y_lk - beta0_lk - X_lk * beta_lk;
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/ sigma_lk;
  // Calculate the gamma exponential term
   arma::vec ga_pow(n);
   for (int i = 0; i < n; ++i) {
@@ -41,7 +41,7 @@ double beta_neg_lk_cpp(
 
 // [[Rcpp::export]]
 arma::vec beta_neg_gradient_cpp(
-    arma::vec beta_lk, double beta0_lk, double nu_lk, double ga_lk,
+    arma::vec beta_lk, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec betaPRE, double t0, double t1, arma::vec Y_lk, arma::mat X_lk,
     double theta_lk) {
   // Get n and p
@@ -54,7 +54,7 @@ arma::vec beta_neg_gradient_cpp(
     Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
   }
   // Compute residuals
-  arma::vec residuals = Y_lk - beta0_lk - X_lk * beta_lk;
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/ sigma_lk;
  // Calculate the gamma exponential term
   arma::vec ga_pow(n);
   for (int i = 0; i < n; ++i) {
@@ -63,7 +63,7 @@ arma::vec beta_neg_gradient_cpp(
   }
   arma::vec ratio = (pow(residuals, 2) / nu_lk) % ga_pow;
   arma::vec inverseprob = 1 + (t0 * (1 - theta_val) / (t1 * theta_val)) * exp(-abs(betaPRE) * (t0 - t1));
-  arma::vec grad_denom = (2 * residuals % ga_pow / nu_lk) / (1 + ratio);
+  arma::vec grad_denom = (2 * residuals % ga_pow / (sigma_lk * nu_lk)) / (1 + ratio);
   arma::vec signbeta_lk = arma::sign(beta_lk);
   arma::vec gradient = signbeta_lk % (t0 - (t0 - t1) / inverseprob) -(nu_lk/2 + 0.5) * X_lk.t() * grad_denom;
   return Rcpp::NumericVector(gradient.begin(), gradient.end());
@@ -72,7 +72,7 @@ arma::vec beta_neg_gradient_cpp(
 
 // [[Rcpp::export]]
 arma::mat beta_neg_hessian_cpp(
-    arma::vec beta_lk, double beta0_lk, double nu_lk, double ga_lk,
+    arma::vec beta_lk, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec betaPRE, double t0, double t1, arma::vec Y_lk, arma::mat X_lk
     ) {
   // Get n and p
@@ -83,7 +83,7 @@ arma::mat beta_neg_hessian_cpp(
     Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
   }
   // Compute residuals
-  arma::vec residuals = Y_lk - beta0_lk - X_lk * beta_lk;
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/ sigma_lk;
  // Calculate the gamma exponential term
   arma::vec ga_pow(n);
   for (int i = 0; i < n; ++i) {
@@ -95,7 +95,7 @@ arma::mat beta_neg_hessian_cpp(
   for (int i = 0; i < n; ++i) {
     double r = residuals[i];
     double gi = ga_pow[i];
-    h[i] = (2.0 * gi / nu_lk * (1.0 - (gi/nu_lk) * r * r)) /
+    h[i] = (2.0 * gi / (sigma_lk * sigma_lk * nu_lk) * (1.0 - (gi/nu_lk) * r * r)) /
            std::pow(1.0 + (gi/nu_lk) * r * r, 2.0);
   }
   // Hessian
@@ -106,7 +106,7 @@ arma::mat beta_neg_hessian_cpp(
 
 // [[Rcpp::export]]
 double jbeta_neg_gradient_cpp(
-    int j_index, arma::vec beta_lk, double beta0_lk, double nu_lk, double ga_lk,
+    int j_index, arma::vec beta_lk, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec betaPRE, double t0, double t1, arma::vec Y_lk, arma::mat X_lk,
     double theta_lk) {
   // Get n and p
@@ -121,7 +121,7 @@ double jbeta_neg_gradient_cpp(
     Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
   }
   // Compute residuals
-  arma::vec residuals = Y_lk - beta0_lk - X_lk * beta_lk;
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/ sigma_lk;
  // Calculate the gamma exponential term
   arma::vec ga_pow(n);
   for (int i = 0; i < n; ++i) {
@@ -130,8 +130,8 @@ double jbeta_neg_gradient_cpp(
   }
   arma::vec ratio = (pow(residuals, 2) / nu_lk) % ga_pow;
   double inverseprob_j = 1 + (t0 * (1 - theta_val) / (t1 * theta_val)) * exp(-abs(betaPRE[j_index_cpp]) * (t0 - t1));
-  arma::vec grad_denom = (2 * residuals % ga_pow / nu_lk) / (1 + ratio);
-  double signbeta_j = (beta_lk[j_index_cpp] >= 0) ? 1.0 : -1.0;
+  arma::vec grad_denom = (2 * residuals % ga_pow / (sigma_lk * nu_lk)) / (1 + ratio);
+  double signbeta_j = (beta_lk[j_index_cpp] > 0) ? 1.0 : ((beta_lk[j_index_cpp] < 0) ? -1.0 : 0.0);
   arma::vec X_j = X_lk.col(j_index_cpp);
   double gradient_j = signbeta_j * (t0 - (t0 - t1) / inverseprob_j) - (nu_lk/2.0 + 0.5) * arma::dot(X_j, grad_denom);
 
@@ -141,7 +141,7 @@ double jbeta_neg_gradient_cpp(
 
 // [[Rcpp::export]]
 double jbeta_neg_hessian_cpp(
-    int j_index, arma::vec beta_lk, double beta0_lk, double nu_lk, double ga_lk,
+    int j_index, arma::vec beta_lk, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec Y_lk, arma::mat X_lk
     ) {
   // Get n and p
@@ -152,7 +152,7 @@ double jbeta_neg_hessian_cpp(
     Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
   }
   // Compute residuals
-  arma::vec residuals = Y_lk - beta0_lk - X_lk * beta_lk;
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/ sigma_lk;
  // Calculate the gamma exponential term
   arma::vec ga_pow(n);
   for (int i = 0; i < n; ++i) {
@@ -164,7 +164,7 @@ double jbeta_neg_hessian_cpp(
   for (int i = 0; i < n; ++i) {
     double r = residuals[i];
     double gi = ga_pow[i];
-    h[i] = (2.0 * gi / nu_lk * (1.0 - (gi/nu_lk) * r * r)) /
+    h[i] = (2.0 * gi / (sigma_lk * sigma_lk * nu_lk) * (1.0 - (gi/nu_lk) * r * r)) /
            std::pow(1.0 + (gi/nu_lk) * r * r, 2.0);
   }
   // a C++ based index
@@ -179,7 +179,7 @@ double jbeta_neg_hessian_cpp(
 
 // [[Rcpp::export]]
 double jbeta_neg_lk_cpp_maxLik(
-    double beta_j, int j_index, arma::vec beta_noj, double beta0_lk, double nu_lk, double ga_lk,
+    double beta_j, int j_index, arma::vec beta_noj, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec betaPRE, double t0, double t1, arma::vec Y_lk, arma::mat X_lk,
     double theta_lk) {
   // Get n and p
@@ -198,7 +198,7 @@ double jbeta_neg_lk_cpp_maxLik(
   arma::uvec idx = arma::regspace<arma::uvec>(0, p - 1);
   idx.shed_row(j_index_cpp);
   arma::mat X_noj = X_lk.cols(idx);
-  arma::vec residuals = Y_lk - beta0_lk - X_j * beta_j- X_noj * beta_noj;
+  arma::vec residuals = (Y_lk - beta0_lk - X_j * beta_j- X_noj * beta_noj)/ sigma_lk;
  // Calculate the gamma exponential term
   arma::vec ga_pow(n);
   for (int i = 0; i < n; ++i) {
@@ -214,7 +214,7 @@ double jbeta_neg_lk_cpp_maxLik(
 
 // [[Rcpp::export]]
 double jbeta_neg_gradient_cpp_maxLik(
-    double beta_j, int j_index, arma::vec beta_noj, double beta0_lk, double nu_lk, double ga_lk,
+    double beta_j, int j_index, arma::vec beta_noj, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec betaPRE, double t0, double t1, arma::vec Y_lk, arma::mat X_lk,
     double theta_lk) {
   // Get n and p
@@ -233,7 +233,7 @@ double jbeta_neg_gradient_cpp_maxLik(
   arma::uvec idx = arma::regspace<arma::uvec>(0, p - 1);
   idx.shed_row(j_index_cpp);
   arma::mat X_noj = X_lk.cols(idx);
-  arma::vec residuals = Y_lk - beta0_lk - X_j * beta_j- X_noj * beta_noj;
+  arma::vec residuals = (Y_lk - beta0_lk - X_j * beta_j- X_noj * beta_noj)/ sigma_lk;
  // Calculate the gamma exponential term
   arma::vec ga_pow(n);
   for (int i = 0; i < n; ++i) {
@@ -242,8 +242,8 @@ double jbeta_neg_gradient_cpp_maxLik(
   }
   arma::vec ratio = (pow(residuals, 2) / nu_lk) % ga_pow;
   double inverseprob_j = 1 + (t0 * (1 - theta_val) / (t1 * theta_val)) * exp(-abs(betaPRE[j_index_cpp]) * (t0 - t1));
-  arma::vec grad_denom = (2 * residuals % ga_pow / nu_lk) / (1 + ratio);
-  double signbeta_j = (beta_j >= 0) ? 1.0 : -1.0;
+  arma::vec grad_denom = (2 * residuals % ga_pow / (sigma_lk * nu_lk)) / (1 + ratio);
+  double signbeta_j = (beta_j > 0) ? 1.0 : ((beta_j < 0) ? -1.0 : 0.0);
   double gradient_j = signbeta_j * (t0 - (t0 - t1) / inverseprob_j) - (nu_lk/2.0 + 0.5) * arma::dot(X_j, grad_denom);
 
   return gradient_j;
@@ -252,7 +252,7 @@ double jbeta_neg_gradient_cpp_maxLik(
 
 // [[Rcpp::export]]
 double jbeta_neg_hessian_cpp_maxLik(
-    double beta_j, int j_index, arma::vec beta_noj, double beta0_lk, double nu_lk, double ga_lk,
+    double beta_j, int j_index, arma::vec beta_noj, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec Y_lk, arma::mat X_lk
     ) {
   // Get n and p
@@ -269,7 +269,7 @@ double jbeta_neg_hessian_cpp_maxLik(
   arma::uvec idx = arma::regspace<arma::uvec>(0, p - 1);
   idx.shed_row(j_index_cpp);
   arma::mat X_noj = X_lk.cols(idx);
-  arma::vec residuals = Y_lk - beta0_lk - X_j * beta_j- X_noj * beta_noj;
+  arma::vec residuals = (Y_lk - beta0_lk - X_j * beta_j- X_noj * beta_noj)/ sigma_lk;
  // Calculate the gamma exponential term
   arma::vec ga_pow(n);
   for (int i = 0; i < n; ++i) {
@@ -281,7 +281,7 @@ double jbeta_neg_hessian_cpp_maxLik(
   for (int i = 0; i < n; ++i) {
     double r = residuals[i];
     double gi = ga_pow[i];
-    h[i] = (2.0 * gi / nu_lk * (1.0 - (gi/nu_lk) * r * r)) /
+    h[i] = (2.0 * gi / (sigma_lk * sigma_lk * nu_lk) * (1.0 - (gi/nu_lk) * r * r)) /
            std::pow(1.0 + (gi/nu_lk) * r * r, 2.0);
   }
   // Hessian
@@ -292,15 +292,15 @@ double jbeta_neg_hessian_cpp_maxLik(
 
 // [[Rcpp::export]]
 Rcpp::NumericVector beta_neg_lk_cpp_nlm(
-    arma::vec beta_lk, double beta0_lk, double nu_lk, double ga_lk, arma::vec betaPRE, double t0, double t1,
+    arma::vec beta_lk, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk, arma::vec betaPRE, double t0, double t1,
     arma::vec Y_lk, arma::mat X_lk, double theta_lk) {
 
   // Get negtive log likelihood evaluated
-  double neg_lk = beta_neg_lk_cpp(beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk);
+  double neg_lk = beta_neg_lk_cpp(beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk);
   // Get gradient of negtive log likelihood evaluated
-  arma::vec neg_grad = beta_neg_gradient_cpp(beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk);
+  arma::vec neg_grad = beta_neg_gradient_cpp(beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk);
   // Get hessian of negtive log likelihood evaluated
-  arma::mat neg_hess = beta_neg_hessian_cpp(beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk);
+  arma::mat neg_hess = beta_neg_hessian_cpp(beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk);
 
   // Wrap as NumericVector of length 1
   Rcpp::NumericVector bneglog(1);
@@ -315,16 +315,16 @@ Rcpp::NumericVector beta_neg_lk_cpp_nlm(
 
 // [[Rcpp::export]]
 Rcpp::NumericVector jbeta_neg_lk_cpp_nlm(
-    double beta_j, int j_index, arma::vec beta_noj, double beta0_lk, double nu_lk, double ga_lk,
+    double beta_j, int j_index, arma::vec beta_noj, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec betaPRE, double t0, double t1, arma::vec Y_lk, arma::mat X_lk,
     double theta_lk) {
 
   // Get negtive log likelihood evaluated
-  double jneg_lk = jbeta_neg_lk_cpp_maxLik(beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk);
+  double jneg_lk = jbeta_neg_lk_cpp_maxLik(beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk);
   // Get gradient of negtive log likelihood evaluated
-  double jneg_grad = jbeta_neg_gradient_cpp_maxLik(beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk);
+  double jneg_grad = jbeta_neg_gradient_cpp_maxLik(beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk);
   // Get hessian of negtive log likelihood evaluated
-  double jneg_hess = jbeta_neg_hessian_cpp_maxLik(beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, Y_lk, X_lk);
+  double jneg_hess = jbeta_neg_hessian_cpp_maxLik(beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, Y_lk, X_lk);
 
   // Wrap as NumericVector of length 1
   Rcpp::NumericVector jbneglog(1);
@@ -338,7 +338,7 @@ Rcpp::NumericVector jbeta_neg_lk_cpp_nlm(
 }
 
 // [[Rcpp::export]]
-double beta0_neg_lk_cpp(double beta0_lk, arma::vec beta_lk, double nu_lk, double gamma_lk,
+double beta0_neg_lk_cpp(double beta0_lk, arma::vec beta_lk, double sigma_lk, double nu_lk, double gamma_lk,
                         double hyper_mu_beta0, double hyper_sigma_beta0,
                         arma::vec Y_lk, arma::mat X_lk) {
   // Get n and p
@@ -349,7 +349,7 @@ double beta0_neg_lk_cpp(double beta0_lk, arma::vec beta_lk, double nu_lk, double
     Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
   }
   // Compute residuals
-  arma::vec residuals = Y_lk - beta0_lk - X_lk * beta_lk;
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/ sigma_lk;
   // Create index vector
   arma::vec index(n);
   for(int i = 0; i < n; i++) {
@@ -363,6 +363,36 @@ double beta0_neg_lk_cpp(double beta0_lk, arma::vec beta_lk, double nu_lk, double
   }
   return  0.5 * std::pow(beta0_lk - hyper_mu_beta0, 2) / hyper_sigma_beta0 +
     (nu_lk / 2.0 + 0.5) * sum_term;
+}
+
+
+// [[Rcpp::export]]
+double sigma_neg_lk_cpp(double sigma_lk, arma::vec beta_lk, double beta0_lk, double nu_lk, double gamma_lk,
+                        double hyper_nu_sigma, double hyper_A_sigma,
+                        arma::vec Y_lk, arma::mat X_lk) {
+  // Get n and p
+  int n = Y_lk.n_elem;
+  int p = X_lk.n_cols;
+  // Ensure beta_lk size matches X_lk columns
+  if (static_cast<int>(beta_lk.n_elem) != p) {
+    Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
+  }
+  // Compute residuals
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/sigma_lk;
+  // Create index vector
+  arma::vec index(n);
+  for(int i = 0; i < n; i++) {
+    index[i] = (residuals[i] >= 0) ? -1.0 : 1.0;
+  }
+
+  // Calculate sum in the formula
+  double sum_term = 0.0;
+  for(int i = 0; i < n; i++) {
+    double ga_term = std::pow(gamma_lk, 2.0 * index[i]);
+    sum_term += std::log(1.0 + residuals[i] * residuals[i] / nu_lk * ga_term);
+  }
+  const double prior_sigma = (hyper_nu_sigma / 2.0 + 0.5) * log1p((sigma_lk * sigma_lk) / (hyper_A_sigma * hyper_A_sigma * hyper_nu_sigma));
+  return  prior_sigma + n * std::log(sigma_lk)+ (nu_lk / 2.0 + 0.5) * sum_term;
 }
 
 
@@ -412,7 +442,7 @@ double gamma_neg_lk_cpp(double ga_lk, double nu_lk, Rcpp::NumericVector error_lk
 
 // [[Rcpp::export]]
 arma::vec beta_coordinate_descent_cpp(
-    arma::vec beta_cd, double beta0_cd, double nu_cd, double ga_cd,
+    arma::vec beta_cd, double beta0_cd, double sigma_cd, double nu_cd, double ga_cd,
     arma::vec betaPRE, double t0, double t1,
     arma::vec Y_cd, arma::mat X_cd, double theta_cd,
     int maX_cd_iter, double tol) {
@@ -424,9 +454,9 @@ arma::vec beta_coordinate_descent_cpp(
     arma::vec beta_old = beta_cd;
   // Update beta sequentially
     for (int j = 0; j < p; ++j) {
-      double g_j = jbeta_neg_gradient_cpp(j+1, beta_cd, beta0_cd, nu_cd, ga_cd,
+      double g_j = jbeta_neg_gradient_cpp(j+1, beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd,
                                    betaPRE, t0, t1, Y_cd, X_cd, theta_cd);
-      double h_jj = jbeta_neg_hessian_cpp(j+1, beta_cd, beta0_cd, nu_cd, ga_cd, Y_cd, X_cd);
+      double h_jj = jbeta_neg_hessian_cpp(j+1, beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd, Y_cd, X_cd);
     Rcpp::Rcout << "j: " << j << std::endl;
     Rcpp::Rcout << "g_j: " << g_j << std::endl;
     Rcpp::Rcout << "h_jj: " << h_jj << std::endl;
@@ -447,7 +477,7 @@ arma::vec beta_coordinate_descent_cpp(
 
 // [[Rcpp::export]]
 arma::vec beta_coordinate_descent_cpp_maxLik(
-    arma::vec beta_cd, double beta0_cd, double nu_cd, double ga_cd,
+    arma::vec beta_cd, double beta0_cd, double sigma_cd, double nu_cd, double ga_cd,
     arma::vec betaPRE, double t0, double t1,
     arma::vec Y_cd, arma::mat X_cd, double theta_cd,
     int maX_cd_iter, double tol) {
@@ -461,7 +491,7 @@ arma::vec beta_coordinate_descent_cpp_maxLik(
   // Update beta sequentially
     for (int j_cpp = 0; j_cpp < p; ++j_cpp) {
   // Newton update using maxLik
-    beta_cd[j_cpp] = Rcpp::as<double>(wrapper_beta_cd_maxLik(j_cpp+1, beta_cd, beta0_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd));
+    beta_cd[j_cpp] = Rcpp::as<double>(wrapper_beta_cd_maxLik(j_cpp+1, beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd));
     }
   // Check convergence
     if (arma::norm(beta_cd - beta_old, 2) < tol)
@@ -474,7 +504,7 @@ arma::vec beta_coordinate_descent_cpp_maxLik(
 
 // [[Rcpp::export]]
 arma::vec beta_coordinate_descent_cpp_nlm(
-    arma::vec beta_cd, double beta0_cd, double nu_cd, double ga_cd,
+    arma::vec beta_cd, double beta0_cd, double sigma_cd, double nu_cd, double ga_cd,
     arma::vec betaPRE, double t0, double t1,
     arma::vec Y_cd, arma::mat X_cd, double theta_cd,
     int maX_cd_iter, double tol) {
@@ -488,7 +518,7 @@ arma::vec beta_coordinate_descent_cpp_nlm(
   // Update beta sequentially
     for (int j_cpp = 0; j_cpp < p; ++j_cpp) {
   // Newton update using nlm
-    beta_cd[j_cpp] = Rcpp::as<double>(wrapper_beta_cd_nlm(j_cpp+1, beta_cd, beta0_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd));
+    beta_cd[j_cpp] = Rcpp::as<double>(wrapper_beta_cd_nlm(j_cpp+1, beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd));
     }
   // Check convergence
     if (arma::norm(beta_cd - beta_old, 2) < tol)

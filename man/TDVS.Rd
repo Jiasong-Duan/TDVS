@@ -10,6 +10,7 @@ TDVS(
   B = 300,
   sig_cutoff = 0.05,
   init_beta0_TDVS = 1,
+  init_sigma_TDVS = 1,
   init_nu_TDVS = 1,
   init_gamma_TDVS = 1,
   init_theta_TDVS = 0.5,
@@ -17,6 +18,8 @@ TDVS(
   SS_t1_TDVS = 1,
   hyper_mu_beta0_TDVS = 0,
   hyper_sigma_beta0_TDVS = 1e+06,
+  hyper_nu_sigma_TDVS = 4,
+  hyper_A_sigma_TDVS = 50,
   hyper_mu_nu_TDVS = 1,
   hyper_sigma_nu_TDVS = 1,
   hyper_c_gamma_TDVS = 1e-04,
@@ -40,6 +43,8 @@ TDVS(
 
 \item{init_beta0_TDVS}{Initial value for beta0 (default: 1)}
 
+\item{init_sigma_TDVS}{Initial value for sigma (default: 1)}
+
 \item{init_nu_TDVS}{Initial value for nu (default: 1)}
 
 \item{init_gamma_TDVS}{Initial value for gamma (default: 1)}
@@ -53,6 +58,10 @@ TDVS(
 \item{hyper_mu_beta0_TDVS}{the mean hyperparameter in beta0's Normal prior (default: 0)}
 
 \item{hyper_sigma_beta0_TDVS}{the variance hyperparameter in beta0's Normal prior (default: 1e6)}
+
+\item{hyper_nu_sigma_TDVS}{the degree of freedom hyperparameter in sigma's half t prior (default: 4)}
+
+\item{hyper_A_sigma_TDVS}{the scale hyperparameter in sigma's half t prior (default: 50)}
 
 \item{hyper_mu_nu_TDVS}{the location hyperparameter in nu's log-normal prior (default: 1)}
 

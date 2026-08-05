@@ -7,8 +7,9 @@
 wrapper_beta(
   beta,
   beta0,
+  sigma_b,
   nu,
-  gamma,
+  gamma_b,
   betaPRE,
   t0,
   t1,
@@ -19,7 +20,29 @@ wrapper_beta(
 )
 }
 \arguments{
-\item{method}{Estimation function for beta (default: Quasi-Newton method implemented by R optim() function)}
+\item{beta}{Initial beta parameter}
+
+\item{beta0}{Beta0 parameter}
+
+\item{sigma_b}{sigma parameter}
+
+\item{nu}{Nu parameter}
+
+\item{gamma_b}{Gamma parameter}
+
+\item{betaPRE}{Previous beta value}
+
+\item{t0}{the "spike" hyperparameter in beta's spike-and-slab prior}
+
+\item{t1}{the "slab" hyperparameter in beta's spike-and-slab prior}
+
+\item{Y_lk}{Response vector}
+
+\item{X_lk}{Predictor matrix}
+
+\item{theta_lk}{Theta parameter (default: number of predictors)}
+
+\item{method}{Estimation function for beta (default: Newton-Raphson method implemented by R nlm() function)}
 }
 \value{
 Optimized beta parameter

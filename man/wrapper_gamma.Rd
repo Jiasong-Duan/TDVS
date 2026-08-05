@@ -4,10 +4,10 @@
 \alias{wrapper_gamma}
 \title{Wrapper function for gamma optimization}
 \usage{
-wrapper_gamma(gamma, nu, error_lk, hyper_c, hyper_d)
+wrapper_gamma(gamma_upd, nu, error_lk, hyper_c, hyper_d)
 }
 \arguments{
-\item{gamma}{Initial gamma parameter}
+\item{gamma_upd}{Initial gamma parameter}
 
 \item{nu}{Nu parameter}
 

@@ -8,6 +8,7 @@ CiS_group_fun(
   test_indices,
   beta_opt,
   beta0_opt,
+  sigma_opt,
   nu_opt,
   ga_opt,
   dataXY,
@@ -20,6 +21,8 @@ CiS_group_fun(
 \item{beta_opt}{Optimized beta vector}
 
 \item{beta0_opt}{Optimized beta0 value}
+
+\item{sigma_opt}{Optimized sigma value}
 
 \item{nu_opt}{Optimized nu value}
 

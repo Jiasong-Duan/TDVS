@@ -8,8 +8,9 @@ wrapper_beta_cd_maxLik(
   j,
   beta,
   beta0,
+  sigma_bcd,
   nu,
-  gamma,
+  gamma_bcd,
   betaPRE,
   t0,
   t1,
@@ -23,11 +24,13 @@ wrapper_beta_cd_maxLik(
 
 \item{beta}{Initial beta parameter}
 
-\item{beta0}{Beta0 parameter}
+\item{beta0}{beta0 parameter}
 
-\item{nu}{Nu parameter}
+\item{sigma_bcd}{sigma parameter}
 
-\item{gamma}{Gamma parameter}
+\item{nu}{nu parameter}
+
+\item{gamma_bcd}{gamma parameter}
 
 \item{betaPRE}{Previous beta value}
 

@@ -49,7 +49,7 @@ library(TDVS)
 # The true values of coefficients(denoted as B hereinafter) the intercept (denoted as B0 hereinafter) are
 #(2,0,1,0,0,0,0,0) and 2, respectively. 
 #the Predictors are generated from a multivariate normal with mean of zero and an identity covariance matrix. 
-#the Response is generated as Y= XB + epsilon, where epsilon follows MixHat(nu=3, gamma=2) which encodes a 
+#the Response is generated as Y= B0+ XB + epsilon, where the scale parameter sigma = 1 and epsilon follows MixHat(nu=3, gamma=2) which encodes a 
 #heavy-tailed and right skewed distribution.  
 data(data_tdvs)
 head(data_tdvs$Y)

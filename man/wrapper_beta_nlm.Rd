@@ -4,16 +4,30 @@
 \alias{wrapper_beta_nlm}
 \title{Wrapper function for beta optimization using Newton–Raphson method by nlm}
 \usage{
-wrapper_beta_nlm(beta, beta0, nu, gamma, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+wrapper_beta_nlm(
+  beta,
+  beta0,
+  sigma_b,
+  nu,
+  gamma_b,
+  betaPRE,
+  t0,
+  t1,
+  Y_lk,
+  X_lk,
+  theta_lk
+)
 }
 \arguments{
 \item{beta}{Initial beta parameter}
 
 \item{beta0}{Beta0 parameter}
 
+\item{sigma_b}{sigma parameter}
+
 \item{nu}{Nu parameter}
 
-\item{gamma}{Gamma parameter}
+\item{gamma_b}{Gamma parameter}
 
 \item{betaPRE}{Previous beta value}
 
