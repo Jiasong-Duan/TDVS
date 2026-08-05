@@ -4,12 +4,12 @@
 \alias{wrapper_nu}
 \title{Wrapper function for nu optimization}
 \usage{
-wrapper_nu(nu, gamma, error_lk, hyper_mu, hyper_sigma)
+wrapper_nu(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma)
 }
 \arguments{
 \item{nu}{Initial nu parameter}
 
-\item{gamma}{Gamma parameter}
+\item{gamma_nu}{Gamma parameter}
 
 \item{error_lk}{Error vector}
 

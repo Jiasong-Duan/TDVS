@@ -42,7 +42,7 @@ library(TDVS)
 # The true values of coefficients(denoted as B hereinafter) the intercept (denoted as B0 hereinafter) are
 #(2,0,1,0,0,0,0,0) and 2, respectively. 
 #the Predictors are generated from a multivariate normal with mean of zero and an identity covariance matrix. 
-#the Response is generated as Y= XB + epsilon, where epsilon follows MixHat(nu=3, gamma=2) which encodes a 
+#the Response is generated as Y= B0+ XB + epsilon, where the scale parameter sigma = 1 and epsilon follows MixHat(nu=3, gamma=2) which encodes a 
 #heavy-tailed and right skewed distribution.  
 data(data_tdvs)
 head(data_tdvs$Y)
@@ -115,7 +115,7 @@ VS_scr_elapsed <- proc.time() - VS_scr_start
 #computational time
 VS_scr_elapsed
 #>    user  system elapsed 
-#>   82.86    0.27   83.36
+#>   44.70    0.25   45.14
 # The output contains selected variables and the p-values for each predictor
 # The output contains estimated parameters, including beta, beta0, nu, gamma, selected variables and 
 #p-values for each predictor
@@ -148,15 +148,15 @@ print(VS_withscreening)
 #> [2,]    3
 #> 
 #> $p_values
-#>      [,1]
-#> [1,]    0
-#> [2,]   -1
-#> [3,]    0
-#> [4,]   -1
-#> [5,]   -1
-#> [6,]   -1
-#> [7,]   -1
-#> [8,]   -1
+#>              [,1]
+#> [1,]  0.003333333
+#> [2,] -1.000000000
+#> [3,]  0.000000000
+#> [4,] -1.000000000
+#> [5,] -1.000000000
+#> [6,] -1.000000000
+#> [7,] -1.000000000
+#> [8,] -1.000000000
 #Variable selection without pre-screening. Requires longer time than the multi-stage version.
 VS_noscr_start <- proc.time()
 VS_noscreening <- TDVS(data_tdvs)
@@ -172,7 +172,7 @@ VS_noscr_elapsed <- proc.time() - VS_noscr_start
 #computational time
 VS_noscr_elapsed
 #>    user  system elapsed 
-#>  128.81    0.59  129.68
+#>  140.44    0.80  141.54
 print(VS_noscreening)
 #> $beta_estimates
 #>               [,1]
@@ -204,9 +204,9 @@ print(VS_noscreening)
 #> [1,] 0.0000000
 #> [2,] 0.2166667
 #> [3,] 0.0000000
-#> [4,] 0.4700000
-#> [5,] 0.3933333
-#> [6,] 0.6833333
-#> [7,] 0.8500000
-#> [8,] 0.7666667
+#> [4,] 0.4666667
+#> [5,] 0.4100000
+#> [6,] 0.6966667
+#> [7,] 0.8700000
+#> [8,] 0.7566667
 ```

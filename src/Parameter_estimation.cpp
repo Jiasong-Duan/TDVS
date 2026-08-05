@@ -15,6 +15,7 @@ Rcpp::List TDVS_EM_cpp(
     Rcpp::List dataXY,
     arma::vec init_beta,
     double init_beta0,
+    double init_sigma,
     double init_nu,
     double init_gamma,
     double init_theta,
@@ -22,6 +23,8 @@ Rcpp::List TDVS_EM_cpp(
     double SS_t1,
     double hyper_mu_beta0,
     double hyper_sigma_beta0,
+    double hyper_nu_sigma,
+    double hyper_A_sigma,
     double hyper_mu_nu,
     double hyper_sigma_nu,
     double hyper_c_gamma,
@@ -43,6 +46,7 @@ Rcpp::List TDVS_EM_cpp(
   // initial values for parameters
   arma::vec beta_upd=init_beta;
   double beta0_upd = init_beta0;
+  double sigma_upd = init_sigma;
   double nu_upd = init_nu;
   double gamma_upd = init_gamma;
   double theta_upd = init_theta;
@@ -50,6 +54,7 @@ Rcpp::List TDVS_EM_cpp(
   arma::vec beta_pre = init_beta;
   arma::vec beta_pre_pre = init_beta;
   double beta0_pre = init_beta0;
+  double sigma_pre = init_sigma;
   double nu_pre = init_nu;
   double gamma_pre = init_gamma;
   double theta_pre = init_theta;
@@ -69,6 +74,7 @@ Rcpp::List TDVS_EM_cpp(
   // Output history containers
   arma::mat beta_hist = arma::mat(p, max_iter).fill(arma::datum::nan);
   arma::vec beta0_hist(max_iter);
+  arma::vec sigma_hist(max_iter);
   arma::vec nu_hist(max_iter);
   arma::vec gamma_hist(max_iter);
   arma::vec theta_hist(max_iter);
@@ -80,6 +86,7 @@ Rcpp::List TDVS_EM_cpp(
   Rcpp::Environment pkg_env = Rcpp::Environment::namespace_env("TDVS");
   Rcpp::Function wrapper_beta = pkg_env["wrapper_beta"];
   Rcpp::Function wrapper_beta0 = pkg_env["wrapper_beta0"];
+  Rcpp::Function wrapper_sigma = pkg_env["wrapper_sigma"];
   Rcpp::Function wrapper_nu = pkg_env["wrapper_nu"];
   Rcpp::Function wrapper_gamma = pkg_env["wrapper_gamma"];
 
@@ -87,6 +94,7 @@ Rcpp::List TDVS_EM_cpp(
     beta_pre_pre = beta_pre;
     beta_pre = beta_upd;
     beta0_pre = beta0_upd;
+    sigma_pre = sigma_upd;
     nu_pre = nu_upd;
     gamma_pre = gamma_upd;
     theta_pre = theta_upd;
@@ -94,9 +102,10 @@ Rcpp::List TDVS_EM_cpp(
     // M-step
     try {
       // M-step: update parameters via R wrappers
-      beta_upd = Rcpp::as<arma::vec>(wrapper_beta(beta_upd, beta0_pre, nu_pre, gamma_pre, beta_pre, SS_t0, SS_t1, dat_Y, dat_X, theta_pre));
-      beta0_upd = Rcpp::as<double>(wrapper_beta0(beta0_pre, beta_upd, nu_pre, gamma_pre, hyper_mu_beta0, hyper_sigma_beta0, dat_Y, dat_X));
-      arma::vec error_upd = dat_Y - beta0_upd - dat_X * beta_upd;
+      beta_upd = Rcpp::as<arma::vec>(wrapper_beta(beta_pre, beta0_pre, sigma_pre, nu_pre, gamma_pre, beta_pre_pre, SS_t0, SS_t1, dat_Y, dat_X, theta_pre));
+      beta0_upd = Rcpp::as<double>(wrapper_beta0(beta0_pre, beta_upd, sigma_pre, nu_pre, gamma_pre, hyper_mu_beta0, hyper_sigma_beta0, dat_Y, dat_X));
+      sigma_upd = Rcpp::as<double>(wrapper_sigma(sigma_pre, beta0_upd, beta_upd, nu_pre, gamma_pre, hyper_nu_sigma, hyper_A_sigma, dat_Y, dat_X));
+      arma::vec error_upd = (dat_Y - beta0_upd - dat_X * beta_upd)/sigma_upd;
       nu_upd = Rcpp::as<double>(wrapper_nu(nu_pre, gamma_pre, error_upd, hyper_mu_nu, hyper_sigma_nu));
       gamma_upd = Rcpp::as<double>(wrapper_gamma(gamma_pre, nu_upd, error_upd, hyper_c_gamma, hyper_d_gamma));
       arma::vec prob_indiv = 1/(1+(SS_t0 * (1-theta_pre) / (SS_t1 * theta_pre)) * exp(-abs(beta_upd) * (SS_t0-SS_t1)));
@@ -110,22 +119,23 @@ Rcpp::List TDVS_EM_cpp(
     // Store updates
     beta_hist.col(iter) = beta_upd;
     beta0_hist[iter] = beta0_upd;
+    sigma_hist[iter] = sigma_upd;
     nu_hist[iter] = nu_upd;
     gamma_hist[iter] = gamma_upd;
     theta_hist[iter] = theta_upd;
 
-    if (!beta_upd.is_finite() || !R_finite(beta0_upd) || !R_finite(nu_upd) || !R_finite(gamma_upd) || !R_finite(theta_upd)) {
+    if (!beta_upd.is_finite() || !R_finite(beta0_upd) || !R_finite(sigma_upd) || !R_finite(nu_upd) || !R_finite(gamma_upd) || !R_finite(theta_upd)) {
       Rcpp::stop("Non-finite parameter encountered.");
     }
 
     // Check convergence
     if (conv_type == "param") {
-      arma::vec prev = arma::join_vert(beta_pre, arma::vec({beta0_pre, nu_pre, gamma_pre, theta_pre}));
-      arma::vec upd = arma::join_vert(beta_upd, arma::vec({beta0_upd, nu_upd, gamma_upd, theta_upd}));
+      arma::vec prev = arma::join_vert(beta_pre, arma::vec({beta0_pre, sigma_pre, nu_pre, gamma_pre, theta_pre}));
+      arma::vec upd = arma::join_vert(beta_upd, arma::vec({beta0_upd, sigma_upd, nu_upd, gamma_upd, theta_upd}));
       diff_val = arma::norm(upd - prev, 1);  // L1 norm
     } else if (conv_type == "loglik") {
-      diff_val = abs(beta_neg_lk_cpp(beta_upd, beta0_upd, nu_upd, gamma_upd, beta_pre, SS_t0, SS_t1, dat_Y, dat_X, theta_upd)-
-        beta_neg_lk_cpp(beta_pre, beta0_pre, nu_pre, gamma_pre, beta_pre_pre, SS_t0, SS_t1, dat_Y, dat_X, theta_pre));
+      diff_val = abs(beta_neg_lk_cpp(beta_upd, beta0_upd, sigma_upd, nu_upd, gamma_upd, beta_pre, SS_t0, SS_t1, dat_Y, dat_X, theta_upd)-
+        beta_neg_lk_cpp(beta_pre, beta0_pre, sigma_pre, nu_pre, gamma_pre, beta_pre_pre, SS_t0, SS_t1, dat_Y, dat_X, theta_pre));
     } else {
       Rcpp::stop("Invalid convergence type. Use 'param' or 'loglik'.");
     }
@@ -142,6 +152,7 @@ Rcpp::List TDVS_EM_cpp(
   // Trim history lists
   arma::mat beta_hist_trimmed = beta_hist.cols(0, iter-1);
   arma::vec beta0_hist_trimmed = beta0_hist.head(iter);
+  arma::vec sigma_hist_trimmed = sigma_hist.head(iter);
   arma::vec nu_hist_trimmed = nu_hist.head(iter);
   arma::vec gamma_hist_trimmed = gamma_hist.head(iter);
   arma::vec theta_hist_trimmed = theta_hist.head(iter);
@@ -149,6 +160,7 @@ Rcpp::List TDVS_EM_cpp(
   return Rcpp::List::create(
     Rcpp::Named("beta") = beta_upd,
     Rcpp::Named("beta0") = beta0_upd,
+    Rcpp::Named("sigma") = sigma_upd,
     Rcpp::Named("nu") = nu_upd,
     Rcpp::Named("gamma") = gamma_upd,
     Rcpp::Named("theta") = theta_upd,
@@ -158,6 +170,7 @@ Rcpp::List TDVS_EM_cpp(
     Rcpp::Named("history") = Rcpp::List::create(
       Rcpp::Named("beta") = beta_hist_trimmed,
       Rcpp::Named("beta0") = beta0_hist_trimmed,
+      Rcpp::Named("sigma") = sigma_hist_trimmed,
       Rcpp::Named("nu") = nu_hist_trimmed,
       Rcpp::Named("gamma") = gamma_hist_trimmed,
       Rcpp::Named("theta") = theta_hist_trimmed

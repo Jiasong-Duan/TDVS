@@ -9,84 +9,88 @@ curvature_error_cpp <- function(err, nu_cur, ga_cur) {
     .Call(`_TDVS_curvature_error_cpp`, err, nu_cur, ga_cur)
 }
 
-CiS_j_fun_cpp <- function(test_index, beta_opt, beta0_opt, nu_opt, ga_opt, dataXY, add_correc_CiS) {
-    .Call(`_TDVS_CiS_j_fun_cpp`, test_index, beta_opt, beta0_opt, nu_opt, ga_opt, dataXY, add_correc_CiS)
+CiS_j_fun_cpp <- function(test_index, beta_opt, beta0_opt, sigma_opt, nu_opt, ga_opt, dataXY, add_correc_CiS) {
+    .Call(`_TDVS_CiS_j_fun_cpp`, test_index, beta_opt, beta0_opt, sigma_opt, nu_opt, ga_opt, dataXY, add_correc_CiS)
 }
 
-per_fun_cpp <- function(j_index, dataXY, init_beta_per, init_beta0_per, init_nu_per, init_gamma_per, init_theta_per, SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_per, max_iter_per, tol_per, add_correc_CiS) {
-    .Call(`_TDVS_per_fun_cpp`, j_index, dataXY, init_beta_per, init_beta0_per, init_nu_per, init_gamma_per, init_theta_per, SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_per, max_iter_per, tol_per, add_correc_CiS)
+per_fun_cpp <- function(j_index, dataXY, init_beta_per, init_beta0_per, init_sigma_per, init_nu_per, init_gamma_per, init_theta_per, SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per, hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_per, max_iter_per, tol_per, add_correc_CiS) {
+    .Call(`_TDVS_per_fun_cpp`, j_index, dataXY, init_beta_per, init_beta0_per, init_sigma_per, init_nu_per, init_gamma_per, init_theta_per, SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per, hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_per, max_iter_per, tol_per, add_correc_CiS)
 }
 
-CiS_group_fun_cpp <- function(test_indices, beta_opt, beta0_opt, nu_opt, ga_opt, dataXY, add_correc_CiS) {
-    .Call(`_TDVS_CiS_group_fun_cpp`, test_indices, beta_opt, beta0_opt, nu_opt, ga_opt, dataXY, add_correc_CiS)
+CiS_group_fun_cpp <- function(test_indices, beta_opt, beta0_opt, sigma_opt, nu_opt, ga_opt, dataXY, add_correc_CiS) {
+    .Call(`_TDVS_CiS_group_fun_cpp`, test_indices, beta_opt, beta0_opt, sigma_opt, nu_opt, ga_opt, dataXY, add_correc_CiS)
 }
 
-per_group_fun_cpp <- function(j_indices, dataXY, init_beta_per, init_beta0_per, init_nu_per, init_gamma_per, init_theta_per, SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_per, max_iter_per, tol_per, add_correc_CiS) {
-    .Call(`_TDVS_per_group_fun_cpp`, j_indices, dataXY, init_beta_per, init_beta0_per, init_nu_per, init_gamma_per, init_theta_per, SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_per, max_iter_per, tol_per, add_correc_CiS)
+per_group_fun_cpp <- function(j_indices, dataXY, init_beta_per, init_beta0_per, init_sigma_per, init_nu_per, init_gamma_per, init_theta_per, SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per, hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_per, max_iter_per, tol_per, add_correc_CiS) {
+    .Call(`_TDVS_per_group_fun_cpp`, j_indices, dataXY, init_beta_per, init_beta0_per, init_sigma_per, init_nu_per, init_gamma_per, init_theta_per, SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per, hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per, hyper_a_theta_per, hyper_b_theta_per, max_iter_per, tol_per, add_correc_CiS)
 }
 
-TDVS_EM_cpp <- function(dataXY, init_beta, init_beta0, init_nu, init_gamma, init_theta, SS_t0, SS_t1, hyper_mu_beta0, hyper_sigma_beta0, hyper_mu_nu, hyper_sigma_nu, hyper_c_gamma, hyper_d_gamma, hyper_a_theta, hyper_b_theta, max_iter, tol, conv_type) {
-    .Call(`_TDVS_TDVS_EM_cpp`, dataXY, init_beta, init_beta0, init_nu, init_gamma, init_theta, SS_t0, SS_t1, hyper_mu_beta0, hyper_sigma_beta0, hyper_mu_nu, hyper_sigma_nu, hyper_c_gamma, hyper_d_gamma, hyper_a_theta, hyper_b_theta, max_iter, tol, conv_type)
+TDVS_EM_cpp <- function(dataXY, init_beta, init_beta0, init_sigma, init_nu, init_gamma, init_theta, SS_t0, SS_t1, hyper_mu_beta0, hyper_sigma_beta0, hyper_nu_sigma, hyper_A_sigma, hyper_mu_nu, hyper_sigma_nu, hyper_c_gamma, hyper_d_gamma, hyper_a_theta, hyper_b_theta, max_iter, tol, conv_type) {
+    .Call(`_TDVS_TDVS_EM_cpp`, dataXY, init_beta, init_beta0, init_sigma, init_nu, init_gamma, init_theta, SS_t0, SS_t1, hyper_mu_beta0, hyper_sigma_beta0, hyper_nu_sigma, hyper_A_sigma, hyper_mu_nu, hyper_sigma_nu, hyper_c_gamma, hyper_d_gamma, hyper_a_theta, hyper_b_theta, max_iter, tol, conv_type)
 }
 
-TDVS_cpp <- function(dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS) {
-    .Call(`_TDVS_TDVS_cpp`, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS)
+TDVS_cpp <- function(dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS) {
+    .Call(`_TDVS_TDVS_cpp`, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS)
 }
 
-TDVS_j_cpp <- function(test_index, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS) {
-    .Call(`_TDVS_TDVS_j_cpp`, test_index, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS)
+TDVS_j_cpp <- function(test_index, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS) {
+    .Call(`_TDVS_TDVS_j_cpp`, test_index, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS)
 }
 
-TDVS_group_cpp <- function(test_indices, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS) {
-    .Call(`_TDVS_TDVS_group_cpp`, test_indices, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS)
+TDVS_group_cpp <- function(test_indices, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS) {
+    .Call(`_TDVS_TDVS_group_cpp`, test_indices, dataXY, init_beta_TDVS, B, sig_cutoff, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS)
 }
 
-TDVS_multi_stage_cpp <- function(dataXY, init_beta_TDVS, group_B, indiv_B, B_final, group_cutoff, indiv_cutoff, sig_cutoff, group_size, init_beta0_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS) {
-    .Call(`_TDVS_TDVS_multi_stage_cpp`, dataXY, init_beta_TDVS, group_B, indiv_B, B_final, group_cutoff, indiv_cutoff, sig_cutoff, group_size, init_beta0_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS)
+TDVS_multi_stage_cpp <- function(dataXY, init_beta_TDVS, group_B, indiv_B, B_final, group_cutoff, indiv_cutoff, sig_cutoff, group_size, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS) {
+    .Call(`_TDVS_TDVS_multi_stage_cpp`, dataXY, init_beta_TDVS, group_B, indiv_B, B_final, group_cutoff, indiv_cutoff, sig_cutoff, group_size, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS, SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS, hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS, hyper_a_theta_TDVS, hyper_b_theta_TDVS, max_iter_TDVS, tol_TDVS, add_correc_CiS)
 }
 
-beta_neg_lk_cpp <- function(beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-    .Call(`_TDVS_beta_neg_lk_cpp`, beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+beta_neg_lk_cpp <- function(beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+    .Call(`_TDVS_beta_neg_lk_cpp`, beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
 }
 
-beta_neg_gradient_cpp <- function(beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-    .Call(`_TDVS_beta_neg_gradient_cpp`, beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+beta_neg_gradient_cpp <- function(beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+    .Call(`_TDVS_beta_neg_gradient_cpp`, beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
 }
 
-beta_neg_hessian_cpp <- function(beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk) {
-    .Call(`_TDVS_beta_neg_hessian_cpp`, beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk)
+beta_neg_hessian_cpp <- function(beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk) {
+    .Call(`_TDVS_beta_neg_hessian_cpp`, beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk)
 }
 
-jbeta_neg_gradient_cpp <- function(j_index, beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-    .Call(`_TDVS_jbeta_neg_gradient_cpp`, j_index, beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+jbeta_neg_gradient_cpp <- function(j_index, beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+    .Call(`_TDVS_jbeta_neg_gradient_cpp`, j_index, beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
 }
 
-jbeta_neg_hessian_cpp <- function(j_index, beta_lk, beta0_lk, nu_lk, ga_lk, Y_lk, X_lk) {
-    .Call(`_TDVS_jbeta_neg_hessian_cpp`, j_index, beta_lk, beta0_lk, nu_lk, ga_lk, Y_lk, X_lk)
+jbeta_neg_hessian_cpp <- function(j_index, beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, Y_lk, X_lk) {
+    .Call(`_TDVS_jbeta_neg_hessian_cpp`, j_index, beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, Y_lk, X_lk)
 }
 
-jbeta_neg_lk_cpp_maxLik <- function(beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-    .Call(`_TDVS_jbeta_neg_lk_cpp_maxLik`, beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+jbeta_neg_lk_cpp_maxLik <- function(beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+    .Call(`_TDVS_jbeta_neg_lk_cpp_maxLik`, beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
 }
 
-jbeta_neg_gradient_cpp_maxLik <- function(beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-    .Call(`_TDVS_jbeta_neg_gradient_cpp_maxLik`, beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+jbeta_neg_gradient_cpp_maxLik <- function(beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+    .Call(`_TDVS_jbeta_neg_gradient_cpp_maxLik`, beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
 }
 
-jbeta_neg_hessian_cpp_maxLik <- function(beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, Y_lk, X_lk) {
-    .Call(`_TDVS_jbeta_neg_hessian_cpp_maxLik`, beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, Y_lk, X_lk)
+jbeta_neg_hessian_cpp_maxLik <- function(beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, Y_lk, X_lk) {
+    .Call(`_TDVS_jbeta_neg_hessian_cpp_maxLik`, beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, Y_lk, X_lk)
 }
 
-beta_neg_lk_cpp_nlm <- function(beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-    .Call(`_TDVS_beta_neg_lk_cpp_nlm`, beta_lk, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+beta_neg_lk_cpp_nlm <- function(beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+    .Call(`_TDVS_beta_neg_lk_cpp_nlm`, beta_lk, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
 }
 
-jbeta_neg_lk_cpp_nlm <- function(beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
-    .Call(`_TDVS_jbeta_neg_lk_cpp_nlm`, beta_j, j_index, beta_noj, beta0_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
+jbeta_neg_lk_cpp_nlm <- function(beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk) {
+    .Call(`_TDVS_jbeta_neg_lk_cpp_nlm`, beta_j, j_index, beta_noj, beta0_lk, sigma_lk, nu_lk, ga_lk, betaPRE, t0, t1, Y_lk, X_lk, theta_lk)
 }
 
-beta0_neg_lk_cpp <- function(beta0_lk, beta_lk, nu_lk, gamma_lk, hyper_mu_beta0, hyper_sigma_beta0, Y_lk, X_lk) {
-    .Call(`_TDVS_beta0_neg_lk_cpp`, beta0_lk, beta_lk, nu_lk, gamma_lk, hyper_mu_beta0, hyper_sigma_beta0, Y_lk, X_lk)
+beta0_neg_lk_cpp <- function(beta0_lk, beta_lk, sigma_lk, nu_lk, gamma_lk, hyper_mu_beta0, hyper_sigma_beta0, Y_lk, X_lk) {
+    .Call(`_TDVS_beta0_neg_lk_cpp`, beta0_lk, beta_lk, sigma_lk, nu_lk, gamma_lk, hyper_mu_beta0, hyper_sigma_beta0, Y_lk, X_lk)
+}
+
+sigma_neg_lk_cpp <- function(sigma_lk, beta_lk, beta0_lk, nu_lk, gamma_lk, hyper_nu_sigma, hyper_A_sigma, Y_lk, X_lk) {
+    .Call(`_TDVS_sigma_neg_lk_cpp`, sigma_lk, beta_lk, beta0_lk, nu_lk, gamma_lk, hyper_nu_sigma, hyper_A_sigma, Y_lk, X_lk)
 }
 
 nu_neg_lk_cpp <- function(nu_lk, ga_lk, error_lk, hyper_mu, hyper_sigma) {
@@ -97,15 +101,15 @@ gamma_neg_lk_cpp <- function(ga_lk, nu_lk, error_lk, hyper_c, hyper_d) {
     .Call(`_TDVS_gamma_neg_lk_cpp`, ga_lk, nu_lk, error_lk, hyper_c, hyper_d)
 }
 
-beta_coordinate_descent_cpp <- function(beta_cd, beta0_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol) {
-    .Call(`_TDVS_beta_coordinate_descent_cpp`, beta_cd, beta0_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol)
+beta_coordinate_descent_cpp <- function(beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol) {
+    .Call(`_TDVS_beta_coordinate_descent_cpp`, beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol)
 }
 
-beta_coordinate_descent_cpp_maxLik <- function(beta_cd, beta0_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol) {
-    .Call(`_TDVS_beta_coordinate_descent_cpp_maxLik`, beta_cd, beta0_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol)
+beta_coordinate_descent_cpp_maxLik <- function(beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol) {
+    .Call(`_TDVS_beta_coordinate_descent_cpp_maxLik`, beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol)
 }
 
-beta_coordinate_descent_cpp_nlm <- function(beta_cd, beta0_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol) {
-    .Call(`_TDVS_beta_coordinate_descent_cpp_nlm`, beta_cd, beta0_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol)
+beta_coordinate_descent_cpp_nlm <- function(beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol) {
+    .Call(`_TDVS_beta_coordinate_descent_cpp_nlm`, beta_cd, beta0_cd, sigma_cd, nu_cd, ga_cd, betaPRE, t0, t1, Y_cd, X_cd, theta_cd, maX_cd_iter, tol)
 }
 

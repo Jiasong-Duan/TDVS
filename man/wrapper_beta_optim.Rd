@@ -7,8 +7,9 @@
 wrapper_beta_optim(
   beta,
   beta0,
+  sigma_b,
   nu,
-  gamma,
+  gamma_b,
   betaPRE,
   t0,
   t1,
@@ -22,9 +23,11 @@ wrapper_beta_optim(
 
 \item{beta0}{Beta0 parameter}
 
+\item{sigma_b}{sigma parameter}
+
 \item{nu}{Nu parameter}
 
-\item{gamma}{Gamma parameter}
+\item{gamma_b}{Gamma parameter}
 
 \item{betaPRE}{Previous beta value}
 

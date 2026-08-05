@@ -9,6 +9,7 @@ per_group_fun(
   dataXY,
   init_beta_per = rep(1, 8),
   init_beta0_per = 1,
+  init_sigma_per = 1,
   init_nu_per = 1,
   init_gamma_per = 1,
   init_theta_per = 0.5,
@@ -16,6 +17,8 @@ per_group_fun(
   SS_t1_per = 1,
   hyper_mu_beta0_per = 0,
   hyper_sigma_beta0_per = 1e+06,
+  hyper_nu_sigma_per = 4,
+  hyper_A_sigma_per = 50,
   hyper_mu_nu_per = 1,
   hyper_sigma_nu_per = 1,
   hyper_c_gamma_per = 1e-04,
@@ -37,6 +40,8 @@ per_group_fun(
 
 \item{init_beta0_per}{Initial value for beta0 (default: 1)}
 
+\item{init_sigma_per}{Initial value for sigma (default: 1)}
+
 \item{init_nu_per}{Initial value for nu (default: 1)}
 
 \item{init_gamma_per}{Initial value for gamma (default: 1)}
@@ -50,6 +55,10 @@ per_group_fun(
 \item{hyper_mu_beta0_per}{the mean hyperparameter in beta0's Normal prior (default: 0)}
 
 \item{hyper_sigma_beta0_per}{the variance hyperparameter in beta0's Normal prior (default: 1e6)}
+
+\item{hyper_nu_sigma_per}{the degree of freedom hyperparameter in sigma's half t prior (default: 4)}
+
+\item{hyper_A_sigma_per}{the scale hyperparameter in sigma's half t prior (default: 50)}
 
 \item{hyper_mu_nu_per}{the location hyperparameter in nu's log-normal prior (default: 1)}
 
