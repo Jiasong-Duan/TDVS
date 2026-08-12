@@ -141,6 +141,8 @@ double per_fun_cpp(int j_index,
   unsigned final_seed = static_cast<unsigned>(time_seed ^ thread_hash);  // Combine time and thread ID
   std::mt19937 generator(final_seed);
 
+//  Rcpp::Rcout << "C++ seed: " << final_seed << "\n";
+
   // Convert 1-based to 0-based
   arma::uword j_index_cpp = j_index - 1;
 
@@ -270,7 +272,7 @@ double per_group_fun_cpp(const arma::uvec& j_indices,
   // Shuffle each selected column independently
   for (arma::uword col_idx : zero_based) {
     dat_X.col(col_idx) = arma::shuffle(dat_X.col(col_idx));
-  }
+    }
 
   // Create permuted dataset
   Rcpp::List dat_per = Rcpp::List::create(
@@ -278,20 +280,24 @@ double per_group_fun_cpp(const arma::uvec& j_indices,
     Rcpp::Named("X") = dat_X
   );
 
+   double u_before = R::runif(0.0, 1.0);
+
   // Run E-M algorithm
   Rcpp::List em_results = TDVS_EM_cpp(dat_per, init_beta_per, init_beta0_per, init_sigma_per, init_nu_per, init_gamma_per, init_theta_per,
-                                     SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per,
-                                     hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per,
-                                     hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per);
-
+                                      SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per,
+                                      hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per,
+                                      hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per);
   arma::vec beta_hat = em_results["beta"];
   double beta0_hat = em_results["beta0"];
   double sigma_hat = em_results["sigma"];
   double nu_hat = em_results["nu"];
   double ga_hat = em_results["gamma"];
 
+   double u_after = R::runif(0.0, 1.0);
+
   // Evaluate the group effect
   double CiS_group_per = CiS_group_fun_cpp(j_indices, beta_hat, beta0_hat, sigma_hat, nu_hat, ga_hat, dat_per, add_correc_CiS);
 
   return CiS_group_per;
 }
+

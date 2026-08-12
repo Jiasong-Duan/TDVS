@@ -168,6 +168,7 @@ Rcpp::List TDVS_j_cpp(
                                       Rcpp::as<double>(em_orig["gamma"]),
                                       dataXY,
                                       add_correc_CiS);
+
   int count = 0;
     for (int b = 0; b < B; ++b) {
     //the index is not 0-based, so don't need to add 1 using command int j_index_cpp = test_index + 1;

@@ -201,19 +201,35 @@ wrapper_beta_cd_nlm <- function(j, beta, beta0, sigma_bcd, nu, gamma_bcd, betaPR
 #' @param hyper.sigma.beta0 the variance hyperparameter in beta0's Normal prior
 #' @param Y.lk Response vector
 #' @param X.lk Predictor matrix
+#' @param opt.method.beta0 method Estimation function for beta0 (default: Newton-Raphson method implemented by R nlm() function)
 #' @return Optimized beta0 parameter
 #' @export
-wrapper_beta0 <- function(beta0.lk, beta.lk, sigma.lk, nu.lk, gamma.lk, hyper.mu.beta0, hyper.sigma.beta0, Y.lk, X.lk){
-  func <- function(x) beta0_neg_lk_cpp(beta0_lk=x, beta_lk=beta.lk, sigma_lk= sigma.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
-                                       hyper_mu_beta0= hyper.mu.beta0, hyper_sigma_beta0= hyper.sigma.beta0, Y_lk=Y.lk, X_lk=X.lk)
-  result <- tryCatch(
-    optim(par = beta0.lk, fn = func, method = "BFGS"),
-    error = function(e) {
-      warning("beta0 optimization failed: ", conditionMessage(e))
-      list(par = NA)
-    }
-  )
-  return(result$par)
+wrapper_beta0 <- function(beta0.lk, beta.lk, sigma.lk, nu.lk, gamma.lk, hyper.mu.beta0, hyper.sigma.beta0, Y.lk, X.lk, opt.method.beta0 = getOption("TDVS_beta0_method", "nlm")){
+  opt.method.beta0 <- match.arg(opt.method.beta0, c("nlm", "constraint_quasi_Newton"))
+  if (opt.method.beta0 == "nlm"){
+    func_beta0_nlm <- function(x_b0) beta0_neg_lk_cpp_nlm(beta0_lk=x_b0, beta_lk=beta.lk, sigma_lk= sigma.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
+                                         hyper_mu_beta0= hyper.mu.beta0, hyper_sigma_beta0= hyper.sigma.beta0, Y_lk=Y.lk, X_lk=X.lk)
+    result_beta0_nlm <- tryCatch(
+      nlm(f = func_beta0_nlm, p = beta0.lk, check.analyticals= FALSE),
+      error = function(e) {
+        warning("nlm() for beta0 optimization failed: ", conditionMessage(e))
+        list(estimate = NA)
+      }
+    )
+    beta0_est <- result_beta0_nlm$estimate
+  } else if (opt.method.beta0 == "constraint_quasi_Newton"){
+    func_beta0_lk <- function(x) beta0_neg_lk_cpp(beta0_lk=x, beta_lk=beta.lk, sigma_lk= sigma.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
+                                         hyper_mu_beta0= hyper.mu.beta0, hyper_sigma_beta0= hyper.sigma.beta0, Y_lk=Y.lk, X_lk=X.lk)
+    result_beta0_lk <- tryCatch(
+      optim(par = beta0.lk, fn = func_beta0_lk, method = "BFGS"),
+      error = function(e) {
+        warning("beta0 optimization failed: ", conditionMessage(e))
+        list(par = NA)
+      }
+    )
+    beta0_est <- result_beta0_lk$par
+  }
+  return(beta0_est)
 }
 
 #' Wrapper function for sigma optimization
@@ -227,19 +243,36 @@ wrapper_beta0 <- function(beta0.lk, beta.lk, sigma.lk, nu.lk, gamma.lk, hyper.mu
 #' @param hyper.A.sigma the scale hyperparameter in sigma's half t prior
 #' @param Y.lk Response vector
 #' @param X.lk Predictor matrix
+#' @param opt.method.sigma method Estimation function for sigma (default: Newton-Raphson method implemented by R nlm() function)
 #' @return Optimized beta0 parameter
 #' @export
-wrapper_sigma <- function(sigma.lk, beta0.lk, beta.lk, nu.lk, gamma.lk, hyper.nu.sigma, hyper.A.sigma, Y.lk, X.lk){
-  func <- function(x) sigma_neg_lk_cpp(sigma_lk= x, beta_lk= beta.lk, beta0_lk= beta0.lk, nu_lk= nu.lk, gamma_lk= gamma.lk,
+wrapper_sigma <- function(sigma.lk, beta.lk, beta0.lk, nu.lk, gamma.lk, hyper.nu.sigma, hyper.A.sigma, Y.lk, X.lk, opt.method.sigma = getOption("TDVS_sigma_method", "nlm")){
+  opt.method.sigma <- match.arg(opt.method.sigma, c("nlm", "constraint_quasi_Newton"))
+  if (opt.method.sigma == "nlm"){
+    lsigma <- log(sigma.lk)
+    func_logsigma_lk <- function(x_lsigma) logsigma_neg_lk_cpp_nlm(logsigma_lk=x_lsigma, beta_lk=beta.lk, beta0_lk=beta0.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
+                                                            hyper_nu_sigma=hyper.nu.sigma, hyper_A_sigma=hyper.A.sigma, Y_lk=Y.lk, X_lk=X.lk)
+    result_logsigma <- tryCatch(
+      nlm(f = func_logsigma_lk, p = lsigma, check.analyticals= FALSE),
+      error = function(e) {
+        warning("nlm() for sigma optimization failed: ", conditionMessage(e))
+        list(estimate = NA)
+      }
+    )
+    sigma_est <- exp(result_logsigma$estimate)
+  } else if (opt.method.sigma == "constraint_quasi_Newton"){
+    func_sigma_lk <- function(x_sigma) sigma_neg_lk_cpp(sigma_lk= x_sigma, beta_lk= beta.lk, beta0_lk= beta0.lk, nu_lk= nu.lk, gamma_lk= gamma.lk,
                                        hyper_nu_sigma= hyper.nu.sigma, hyper_A_sigma= hyper.A.sigma, Y_lk= Y.lk, X_lk= X.lk)
-  result <- tryCatch(
-    optim(par = sigma.lk, fn = func, method = "L-BFGS-B", lower = 0.01, upper = 100),
+    result_sigma <- tryCatch(
+    optim(par = sigma.lk, fn = func_sigma_lk, method = "L-BFGS-B", lower = 0.01, upper = 100),
     error = function(e) {
-      warning("beta0 optimization failed: ", conditionMessage(e))
+      warning("sigma optimization failed: ", conditionMessage(e))
       list(par = NA)
     }
   )
-  return(result$par)
+  sigma_est <- result_sigma$par
+  }
+  return(sigma_est)
 }
 
 #' Wrapper function for nu optimization
@@ -249,18 +282,36 @@ wrapper_sigma <- function(sigma.lk, beta0.lk, beta.lk, nu.lk, gamma.lk, hyper.nu
 #' @param error_lk Error vector
 #' @param hyper_mu the location hyperparameter in nu's log-normal prior
 #' @param hyper_sigma the scale hyperparameter in nu's log-normal prior
+#' @param opt.method.nu method Estimation function for nu (default: Newton-Raphson method implemented by R nlm() function)
 #' @return Optimized nu parameter
 #' @export
-wrapper_nu <- function(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma) {
-  func <- function(x) nu_neg_lk_cpp(nu_lk=x, ga_lk=gamma_nu, error_lk, hyper_mu, hyper_sigma)
-  result <- tryCatch(
-    optim(par = nu, fn = func, method = "L-BFGS-B", lower = 0.01, upper = 100),
+wrapper_nu <- function(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma, opt.method.nu = getOption("TDVS_nu_method", "nlm")) {
+  opt.method.nu <- match.arg(opt.method.nu, c("nlm", "constraint_quasi_Newton"))
+  if (opt.method.nu == "nlm"){
+    lnu <- log(nu)
+    func_lognu_lk <- function(x_lnu) lognu_neg_lk_cpp_nlm(lognu_lk= x_lnu, ga_lk=gamma_nu, error_lk=error_lk,
+                                                          hyper_mu=hyper_mu, hyper_sigma=hyper_sigma)
+    result_lognu <- tryCatch(
+        nlm(f = func_lognu_lk, p = lnu, check.analyticals= FALSE),
+        error = function(e) {
+          warning("nlm() for nu optimization failed: ", conditionMessage(e))
+          list(estimate = NA)
+        }
+      )
+      nu_est <- exp(result_lognu$estimate)
+  } else if (opt.method.nu == "constraint_quasi_Newton"){
+    func_nu_lk <- function(x_nu) nu_neg_lk_cpp(nu_lk=x_nu, ga_lk=gamma_nu, error_lk=error_lk,
+                                      hyper_mu=hyper_mu, hyper_sigma=hyper_sigma)
+    result_nu <- tryCatch(
+    optim(par = nu, fn = func_nu_lk, method = "L-BFGS-B", lower = 0.01, upper = 100),
     error = function(e) {
       warning("nu optimization failed: ", conditionMessage(e))
       list(par = NA)
     }
   )
-  return(result$par)
+    nu_est <- result_nu$par
+  }
+  return(nu_est)
 }
 
 #' Wrapper function for gamma optimization
@@ -270,18 +321,34 @@ wrapper_nu <- function(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma) {
 #' @param error_lk Error vector
 #' @param hyper_c the shape hyperparameter in gamma's gamma prior
 #' @param hyper_d the rate hyperparameter in gamma's gamma prior
+#' @param opt.method.gamma method Estimation function for gamma (default: Newton-Raphson method implemented by R nlm() function)
 #' @return Optimized gamma parameter
 #' @export
-wrapper_gamma <- function(gamma_upd, nu, error_lk, hyper_c, hyper_d) {
-  func <- function(x) gamma_neg_lk_cpp(ga_lk=x, nu_lk=nu, error_lk, hyper_c, hyper_d)
-  result <- tryCatch(
-    optim(par = gamma_upd, fn = func, method = "L-BFGS-B", lower = 0.01, upper = 100),
-    error = function(e) {
-      warning("gamma optimization failed: ", conditionMessage(e))
-      list(par = NA)
-    }
-  )
-  return(result$par)
+wrapper_gamma <- function(gamma_upd, nu, error_lk, hyper_c, hyper_d, opt.method.gamma = getOption("TDVS_gamma_method", "nlm")) {
+  opt.method.gamma <- match.arg(opt.method.gamma, c("nlm", "constraint_quasi_Newton"))
+  if (opt.method.gamma == "nlm"){
+    lga <- log(gamma_upd)
+    func_loggamma_lk <- function(x_lga) loggamma_neg_lk_cpp_nlm(logga_lk=x_lga, nu_lk=nu, error_lk=error_lk, hyper_c=hyper_c, hyper_d=hyper_d)
+    result_loggamma <- tryCatch(
+      nlm(f = func_loggamma_lk, p = lga, check.analyticals= FALSE),
+      error = function(e) {
+        warning("nlm() for gamma optimization failed: ", conditionMessage(e))
+        list(estimate = NA)
+      }
+    )
+    gamma_est <- exp(result_loggamma$estimate)
+  } else if (opt.method.gamma == "constraint_quasi_Newton"){
+    func_gamma_lk <- function(x_ga) gamma_neg_lk_cpp(ga_lk=x_ga, nu_lk=nu, error_lk=error_lk, hyper_c=hyper_c, hyper_d=hyper_d)
+    result_gamma <- tryCatch(
+      optim(par = gamma_upd, fn = func_gamma_lk, method = "L-BFGS-B", lower = 0.01, upper = 100),
+      error = function(e) {
+        warning("gamma optimization failed: ", conditionMessage(e))
+        list(par = NA)
+      }
+    )
+    gamma_est <- result_gamma$par
+  }
+  return(gamma_est)
 }
 
 #' EM algorithm for TDVS

@@ -330,9 +330,13 @@ Rcpp::NumericVector jbeta_neg_lk_cpp_nlm(
   Rcpp::NumericVector jbneglog(1);
   jbneglog[0] = jneg_lk;
 
+  Rcpp::NumericVector jneg_grad_out(1, jneg_grad);
+  Rcpp::NumericMatrix jneg_hess_out(1, 1);
+  jneg_hess_out(0, 0) = jneg_hess;
+
   // Attach attributes
-  jbneglog.attr("gradient") = jneg_grad;
-  jbneglog.attr("hessian")  = jneg_hess;
+  jbneglog.attr("gradient") = jneg_grad_out;
+  jbneglog.attr("hessian")  = jneg_hess_out;
 
   return jbneglog;
 }
@@ -365,6 +369,85 @@ double beta0_neg_lk_cpp(double beta0_lk, arma::vec beta_lk, double sigma_lk, dou
     (nu_lk / 2.0 + 0.5) * sum_term;
 }
 
+// [[Rcpp::export]]
+double beta0_neg_gradient_cpp(double beta0_lk, arma::vec beta_lk, double sigma_lk, double nu_lk, double gamma_lk,
+                        double hyper_mu_beta0, double hyper_sigma_beta0,
+                        arma::vec Y_lk, arma::mat X_lk) {
+  // Get n and p
+  int n = Y_lk.n_elem;
+  int p = X_lk.n_cols;
+  // Ensure beta_lk size matches X_lk columns
+  if (static_cast<int>(beta_lk.n_elem) != p) {
+    Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
+  }
+  // Compute residuals
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/ sigma_lk;
+  arma::vec residuals_unscale = Y_lk - beta0_lk - X_lk * beta_lk;
+  // Calculate sum in the formula
+  double sum_term_b0 = 0.0;
+  for(int i = 0; i < n; i++) {
+    double index_i = (residuals[i] >= 0) ? -1.0 : 1.0;
+    double ga_term = std::pow(gamma_lk, 2.0 * index_i);
+    double ker_b0_term = ga_term / (sigma_lk * sigma_lk * nu_lk);
+    sum_term_b0 += ker_b0_term * residuals_unscale[i] / (1 + ker_b0_term * residuals_unscale[i] * residuals_unscale[i]);
+  }
+  return  (beta0_lk - hyper_mu_beta0) / hyper_sigma_beta0 - (nu_lk + 1.0) * sum_term_b0;
+}
+
+// [[Rcpp::export]]
+double beta0_neg_hessian_cpp(double beta0_lk, arma::vec beta_lk, double sigma_lk, double nu_lk, double gamma_lk,
+                              double hyper_mu_beta0, double hyper_sigma_beta0,
+                              arma::vec Y_lk, arma::mat X_lk) {
+  // Get n and p
+  int n = Y_lk.n_elem;
+  int p = X_lk.n_cols;
+  // Ensure beta_lk size matches X_lk columns
+  if (static_cast<int>(beta_lk.n_elem) != p) {
+    Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
+  }
+  // Compute residuals
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/ sigma_lk;
+  arma::vec residuals_unscale = Y_lk - beta0_lk - X_lk * beta_lk;
+  // Calculate sum in the formula
+  double sum_term_b0_h = 0.0;
+  for(int i = 0; i < n; i++) {
+    double index_i = (residuals[i] >= 0) ? -1.0 : 1.0;
+    double ga_term = std::pow(gamma_lk, 2.0 * index_i);
+    double ker_b0_term = ga_term / (sigma_lk * sigma_lk * nu_lk);
+    double unscale_res_2 = residuals_unscale[i] * residuals_unscale[i];
+    sum_term_b0_h += ker_b0_term *( 1 - ker_b0_term * unscale_res_2) / ((1 + ker_b0_term * unscale_res_2) * (1 + ker_b0_term * unscale_res_2));
+  }
+  return  1 / hyper_sigma_beta0 + (nu_lk + 1.0) * sum_term_b0_h;
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector beta0_neg_lk_cpp_nlm(double beta0_lk, arma::vec beta_lk, double sigma_lk, double nu_lk, double gamma_lk,
+                                         double hyper_mu_beta0, double hyper_sigma_beta0,
+                                         arma::vec Y_lk, arma::mat X_lk) {
+  // Get negative log likelihood evaluated
+  double neg_beta0_lk = beta0_neg_lk_cpp(beta0_lk, beta_lk, sigma_lk, nu_lk, gamma_lk,
+                                         hyper_mu_beta0, hyper_sigma_beta0, Y_lk, X_lk);
+  // Get gradient of negative log likelihood evaluated
+  double neg_beta0_grad = beta0_neg_gradient_cpp(beta0_lk, beta_lk, sigma_lk, nu_lk, gamma_lk,
+                                                 hyper_mu_beta0, hyper_sigma_beta0, Y_lk, X_lk);
+  // Get hessian of negative log likelihood evaluated
+  double neg_beta0_hess = beta0_neg_hessian_cpp(beta0_lk, beta_lk, sigma_lk, nu_lk, gamma_lk,
+                                                hyper_mu_beta0, hyper_sigma_beta0, Y_lk, X_lk);
+
+  // Wrap as NumericVector of length 1
+  Rcpp::NumericVector beta0_neglog(1);
+  beta0_neglog[0] = neg_beta0_lk;
+
+  Rcpp::NumericVector gradient_beta0_out(1, neg_beta0_grad);
+  Rcpp::NumericMatrix hessian_beta0_out(1, 1);
+  hessian_beta0_out(0, 0) = neg_beta0_hess;
+
+  // Attach attributes
+  beta0_neglog.attr("gradient") = gradient_beta0_out;
+  beta0_neglog.attr("hessian")  = hessian_beta0_out;
+
+  return beta0_neglog;
+}
 
 // [[Rcpp::export]]
 double sigma_neg_lk_cpp(double sigma_lk, arma::vec beta_lk, double beta0_lk, double nu_lk, double gamma_lk,
@@ -395,6 +478,135 @@ double sigma_neg_lk_cpp(double sigma_lk, arma::vec beta_lk, double beta0_lk, dou
   return  prior_sigma + n * std::log(sigma_lk)+ (nu_lk / 2.0 + 0.5) * sum_term;
 }
 
+// [[Rcpp::export]]
+double logsigma_neg_lk_cpp(double logsigma_lk, arma::vec beta_lk, double beta0_lk, double nu_lk, double gamma_lk,
+                           double hyper_nu_sigma, double hyper_A_sigma,
+                           arma::vec Y_lk, arma::mat X_lk) {
+  // Get n and p
+  int n = Y_lk.n_elem;
+  int p = X_lk.n_cols;
+  // Ensure beta_lk size matches X_lk columns
+  if (static_cast<int>(beta_lk.n_elem) != p) {
+    Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
+  }
+  // define sigma and sigma^2
+  const double sigma_def = std::exp(logsigma_lk);
+  const double sigma2 = sigma_def * sigma_def;
+  // Compute residuals
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/sigma_def;
+  // Create index vector
+  arma::vec index(n);
+  for(int i = 0; i < n; i++) {
+    index[i] = (residuals[i] >= 0) ? -1.0 : 1.0;
+  }
+  // Calculate sum in the formula
+  double sum_term = 0.0;
+  for(int i = 0; i < n; i++) {
+    double ga_term = std::pow(gamma_lk, 2.0 * index[i]);
+    sum_term += std::log(1.0 + residuals[i] * residuals[i] / nu_lk * ga_term);
+  }
+  const double prior_logsigma = (hyper_nu_sigma / 2.0 + 0.5) * log1p(sigma2 / (hyper_A_sigma * hyper_A_sigma * hyper_nu_sigma));
+  return  prior_logsigma + n * logsigma_lk+ (nu_lk / 2.0 + 0.5) * sum_term;
+}
+
+// [[Rcpp::export]]
+double logsigma_neg_gradient_cpp(double logsigma_lk, arma::vec beta_lk, double beta0_lk, double nu_lk, double gamma_lk,
+                        double hyper_nu_sigma, double hyper_A_sigma,
+                        arma::vec Y_lk, arma::mat X_lk) {
+  // Get n and p
+  int n = Y_lk.n_elem;
+  int p = X_lk.n_cols;
+  // Ensure beta_lk size matches X_lk columns
+  if (static_cast<int>(beta_lk.n_elem) != p) {
+    Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
+  }
+  // define sigma and sigma^2
+  const double sigma_def = std::exp(logsigma_lk);
+  const double sigma2 = sigma_def * sigma_def;
+  // Compute residuals
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/sigma_def;
+  // Create index vector
+  arma::vec index(n);
+  for(int i = 0; i < n; i++) {
+    index[i] = (residuals[i] >= 0) ? -1.0 : 1.0;
+  }
+  // Calculate sum in the formula
+  double sum_term2 = 0.0;
+  for(int i = 0; i < n; i++) {
+    double ga_term = std::pow(gamma_lk, 2.0 * index[i]);
+    double denom_sum = 1.0 + residuals[i] * residuals[i] / nu_lk * ga_term;
+    sum_term2 += (residuals[i] * residuals[i] / (nu_lk * sigma_def) * ga_term)/denom_sum;
+  }
+  const double Q_prime_prior_partial = (hyper_A_sigma * hyper_A_sigma * hyper_nu_sigma + sigma2);
+  const double Qlogsigma_prime = n/sigma_def + (hyper_nu_sigma+1) * sigma_def/Q_prime_prior_partial - (nu_lk + 1.0) * sum_term2;
+  return  sigma_def * Qlogsigma_prime;
+}
+
+// [[Rcpp::export]]
+double logsigma_neg_hessian_cpp(double logsigma_lk, arma::vec beta_lk, double beta0_lk, double nu_lk, double gamma_lk,
+                                 double hyper_nu_sigma, double hyper_A_sigma,
+                                 arma::vec Y_lk, arma::mat X_lk) {
+  // Get n and p
+  int n = Y_lk.n_elem;
+  int p = X_lk.n_cols;
+  // Ensure beta_lk size matches X_lk columns
+  if (static_cast<int>(beta_lk.n_elem) != p) {
+    Rcpp::stop("Size of beta coefficients does not match predictor dimensions");
+  }
+  // define sigma and sigma^2
+  const double sigma_def = std::exp(logsigma_lk);
+  const double sigma2 = sigma_def * sigma_def;
+  // Compute residuals
+  arma::vec residuals = (Y_lk - beta0_lk - X_lk * beta_lk)/sigma_def;
+  // Create index vector
+  arma::vec index(n);
+  for(int i = 0; i < n; i++) {
+    index[i] = (residuals[i] >= 0) ? -1.0 : 1.0;
+  }
+  // Calculate sum in the formula
+  double sum_term2 = 0.0;
+  double sum_term3 = 0.0;
+  for(int i = 0; i < n; i++) {
+    double ga_term = std::pow(gamma_lk, 2.0 * index[i]);
+    double ker_term = residuals[i] * residuals[i] / nu_lk * ga_term;
+    double denom_sum = 1.0 + ker_term;
+    sum_term2 += ker_term/(sigma_def * denom_sum);
+    sum_term3 += (3.0 * ker_term + ker_term * ker_term)/(sigma2 * denom_sum * denom_sum );
+  }
+  const double Q_prime_prior_partial = (hyper_A_sigma * hyper_A_sigma * hyper_nu_sigma + sigma2);
+  const double Qlogsigma_prime2 = -n/sigma2 + (hyper_nu_sigma + 1.0) * (hyper_A_sigma * hyper_A_sigma * hyper_nu_sigma - sigma2)/ (Q_prime_prior_partial*Q_prime_prior_partial) + (nu_lk + 1.0) * sum_term3;
+  const double Qlogsigma_prime = n/sigma_def + (hyper_nu_sigma + 1.0) * sigma_def / Q_prime_prior_partial - (nu_lk + 1.0) * sum_term2;
+  return  sigma_def * Qlogsigma_prime + sigma2 * Qlogsigma_prime2;
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector logsigma_neg_lk_cpp_nlm(double logsigma_lk, arma::vec beta_lk, double beta0_lk, double nu_lk, double gamma_lk,
+                               double hyper_nu_sigma, double hyper_A_sigma,
+                               arma::vec Y_lk, arma::mat X_lk) {
+  // Get negative log likelihood evaluated
+  double neg_logsigma_lk = logsigma_neg_lk_cpp(logsigma_lk, beta_lk, beta0_lk, nu_lk, gamma_lk,
+                                               hyper_nu_sigma, hyper_A_sigma, Y_lk, X_lk);
+  // Get gradient of negative log likelihood evaluated
+  double neg_logsigma_grad = logsigma_neg_gradient_cpp(logsigma_lk, beta_lk, beta0_lk, nu_lk, gamma_lk,
+                                                 hyper_nu_sigma, hyper_A_sigma, Y_lk, X_lk);
+  // Get hessian of negative log likelihood evaluated
+  double neg_logsigma_hess = logsigma_neg_hessian_cpp(logsigma_lk, beta_lk, beta0_lk, nu_lk, gamma_lk,
+                                                 hyper_nu_sigma, hyper_A_sigma, Y_lk, X_lk);
+
+  // Wrap as NumericVector of length 1
+  Rcpp::NumericVector logsigma_neglog(1);
+  logsigma_neglog[0] = neg_logsigma_lk;
+
+  Rcpp::NumericVector gradient_lsigma_out(1, neg_logsigma_grad);
+  Rcpp::NumericMatrix hessian_lsigma_out(1, 1);
+  hessian_lsigma_out(0, 0) = neg_logsigma_hess;
+
+  // Attach attributes
+  logsigma_neglog.attr("gradient") = gradient_lsigma_out;
+  logsigma_neglog.attr("hessian")  = hessian_lsigma_out;
+
+  return logsigma_neglog;
+}
 
 // [[Rcpp::export]]
 double nu_neg_lk_cpp(double nu_lk, double ga_lk, Rcpp::NumericVector error_lk,
@@ -418,6 +630,102 @@ double nu_neg_lk_cpp(double nu_lk, double ga_lk, Rcpp::NumericVector error_lk,
     (nu_lk / 2.0 + 0.5) * sum_term;
 }
 
+// [[Rcpp::export]]
+double lognu_neg_lk_cpp(double lognu_lk, double ga_lk, Rcpp::NumericVector error_lk,
+                     double hyper_mu, double hyper_sigma) {
+  // Get n
+  int n = error_lk.size();
+  Rcpp::NumericVector index(n);
+  // Create index vector (ifelse(error_lk>=0,-1,1))
+  for(int i = 0; i < n; i++) {
+    index[i] = (error_lk[i] >= 0) ? -1.0 : 1.0;
+  }
+  // define nu
+  const double nu_def = std::exp(lognu_lk);
+  // Calculate sum in the formula
+  double sum_term = 0.0;
+  for(int i = 0; i < n; i++) {
+    double ga_term = std::pow(ga_lk, 2.0 * index[i]);
+    sum_term += std::log(1.0 + error_lk[i] * error_lk[i] / nu_def * ga_term);
+  }
+  return (std::pow(std::log(nu_def) - hyper_mu, 2) / (2.0 * std::pow(hyper_sigma, 2))) +
+    (n / 2.0 + 1.0) * std::log(nu_def) -
+    n * (R::lgammafn(nu_def / 2.0 + 0.5) - R::lgammafn(nu_def / 2.0)) +
+    (nu_def / 2.0 + 0.5) * sum_term;
+}
+
+// [[Rcpp::export]]
+double lognu_neg_gradient_cpp(double lognu_lk, double ga_lk, Rcpp::NumericVector error_lk,
+                              double hyper_mu, double hyper_sigma) {
+  // Get n
+  int n = error_lk.size();
+  // Transform log(nu) back to nu
+  const double nu_def = std::exp(lognu_lk);
+  // Calculate sum in the formula
+  double nu_sum_term1 = 0.0;
+  double nu_sum_term2 = 0.0;
+  for(int i = 0; i < n; i++) {
+    double index_i = (error_lk[i] >= 0) ? -1.0 : 1.0;
+    double ga_term = std::pow(ga_lk, 2.0 * index_i);
+    double ker_nu_term = error_lk[i] * error_lk[i] * ga_term;
+    nu_sum_term1 += std::log1p(ker_nu_term / nu_def);
+    nu_sum_term2 += ker_nu_term / (nu_def + ker_nu_term);
+  }
+  double nu_prior_partial = (lognu_lk - hyper_mu)/(hyper_sigma * hyper_sigma);
+  return nu_prior_partial + n / 2.0 + 1 - n * 0.5 * nu_def * ( R::digamma(nu_def / 2.0 + 0.5) - R::digamma(nu_def / 2.0) )
+                   + 0.5 * nu_def * nu_sum_term1 - (nu_def / 2.0 + 0.5) * nu_sum_term2;
+}
+
+// [[Rcpp::export]]
+double lognu_neg_hessian_cpp(double lognu_lk, double ga_lk, Rcpp::NumericVector error_lk,
+                              double hyper_mu, double hyper_sigma) {
+  // Get n
+  int n = error_lk.size();
+  // Transform log(nu) back to nu
+  const double nu_def = std::exp(lognu_lk);
+  // Calculate sum in the formula
+  double nu_sum_h_term1 = 0.0;
+  double nu_sum_h_term2 = 0.0;
+  double nu_sum_h_term3 = 0.0;
+  for(int i = 0; i < n; i++) {
+    double index_i = (error_lk[i] >= 0) ? -1.0 : 1.0;
+    double ga_term = std::pow(ga_lk, 2.0 * index_i);
+    double ker_nu_term = error_lk[i] * error_lk[i] * ga_term;
+    nu_sum_h_term1 += std::log1p(ker_nu_term / nu_def);
+    nu_sum_h_term2 += ker_nu_term / (nu_def + ker_nu_term);
+    nu_sum_h_term3 += ker_nu_term / ( (nu_def + ker_nu_term) * (nu_def + ker_nu_term) );
+  }
+  double nu_prior_partial = 1 /(hyper_sigma * hyper_sigma * nu_def);
+  double nu_gammas_partial = n * 0.5 * ( R::digamma(nu_def / 2.0 + 0.5) - R::digamma(nu_def / 2.0) ) +
+    n * 0.25 * nu_def * ( R::trigamma(nu_def / 2.0 + 0.5) - R::trigamma(nu_def / 2.0) );
+  double nu_Q_prime2 = nu_prior_partial - nu_gammas_partial + 0.5 * nu_sum_h_term1 - nu_sum_h_term2 + (nu_def + 1) * 0.5 * nu_sum_h_term3;
+  return nu_def * nu_Q_prime2;
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector lognu_neg_lk_cpp_nlm(double lognu_lk, double ga_lk, Rcpp::NumericVector error_lk,
+                                         double hyper_mu, double hyper_sigma) {
+  // Get negative log likelihood evaluated
+  double neg_lognu_lk = lognu_neg_lk_cpp(lognu_lk, ga_lk, error_lk, hyper_mu, hyper_sigma);
+  // Get gradient of negative log likelihood evaluated
+  double neg_lognu_grad = lognu_neg_gradient_cpp(lognu_lk, ga_lk, error_lk, hyper_mu, hyper_sigma);
+  // Get hessian of negative log likelihood evaluated
+  double neg_lognu_hess = lognu_neg_hessian_cpp(lognu_lk, ga_lk, error_lk, hyper_mu, hyper_sigma);
+
+  // Wrap as NumericVector of length 1
+  Rcpp::NumericVector lognu_neglog(1);
+  lognu_neglog[0] = neg_lognu_lk;
+
+  Rcpp::NumericVector gradient_lnu_out(1, neg_lognu_grad);
+  Rcpp::NumericMatrix hessian_lnu_out(1, 1);
+  hessian_lnu_out(0, 0) = neg_lognu_hess;
+
+  // Attach attributes
+  lognu_neglog.attr("gradient") = gradient_lnu_out;
+  lognu_neglog.attr("hessian")  = hessian_lnu_out;
+
+  return lognu_neglog;
+}
 
 // [[Rcpp::export]]
 double gamma_neg_lk_cpp(double ga_lk, double nu_lk, Rcpp::NumericVector error_lk,
@@ -439,6 +747,96 @@ double gamma_neg_lk_cpp(double ga_lk, double nu_lk, Rcpp::NumericVector error_lk
     n * std::log(std::pow(ga_lk, 2) + 1.0) + (nu_lk / 2.0 + 0.5) * sum_term;
 }
 
+// [[Rcpp::export]]
+double loggamma_neg_lk_cpp(double logga_lk, double nu_lk, Rcpp::NumericVector error_lk,
+                        double hyper_c, double hyper_d) {
+  // Get n
+  int n = error_lk.size();
+  Rcpp::NumericVector index(n);
+  // Create index vector (ifelse(error_lk>=0,-1,1))
+  for(int i = 0; i < n; i++) {
+    index[i] = (error_lk[i] >= 0) ? -1.0 : 1.0;
+  }
+  // Transform log(nu) back to nu
+  const double ga_def = std::exp(logga_lk);
+  // Calculate sum in the formula
+  double sum_term = 0.0;
+  for(int i = 0; i < n; i++) {
+    double ga_term = std::pow(ga_def, 2.0 * index[i]);
+    sum_term += std::log(1.0 + error_lk[i] * error_lk[i] / nu_lk * ga_term);
+  }
+  return -(n + hyper_c - 1.0) * std::log(ga_def) + hyper_d * ga_def +
+    n * std::log1p(ga_def * ga_def) + (nu_lk / 2.0 + 0.5) * sum_term;
+}
+
+// [[Rcpp::export]]
+double loggamma_neg_gradient_cpp(double logga_lk, double nu_lk, Rcpp::NumericVector error_lk,
+                           double hyper_c, double hyper_d) {
+  // Get n
+  int n = error_lk.size();
+  Rcpp::NumericVector index(n);
+  // Transform log(nu) back to nu
+  const double ga_def = std::exp(logga_lk);
+  const double ga_def2 = ga_def * ga_def;
+  // Calculate sum in the formula
+  double sum_lga = 0.0;
+  for(int i = 0; i < n; i++) {
+    index[i] = (error_lk[i] >= 0) ? -1.0 : 1.0;
+    double ga_term = std::pow(ga_def, 2.0 * index[i]);
+    double ga_ker_term = error_lk[i] * error_lk[i] / nu_lk  * ga_term;
+    double sum_lga_num = index[i] * ga_ker_term;
+    double sum_lga_denom = 1 + ga_ker_term;
+    sum_lga += sum_lga_num / sum_lga_denom;
+  }
+  return -(n + hyper_c - 1.0) + hyper_d * ga_def + 2 *n * ga_def2 / (ga_def2 + 1) +
+    (nu_lk + 1) * sum_lga;
+}
+
+// [[Rcpp::export]]
+double loggamma_neg_hessian_cpp(double logga_lk, double nu_lk, Rcpp::NumericVector error_lk,
+                                 double hyper_c, double hyper_d) {
+  // Get n
+  int n = error_lk.size();
+  Rcpp::NumericVector index(n);
+  // Transform log(nu) back to nu
+  const double ga_def = std::exp(logga_lk);
+  const double ga_def2 = ga_def * ga_def;
+  // Calculate sum in the formula
+  double sum_lga_h = 0.0;
+  for(int i = 0; i < n; i++) {
+    index[i] = (error_lk[i] >= 0) ? -1.0 : 1.0;
+    double ga_term = std::pow(ga_def, 2.0 * index[i]);
+    double ga_ker_term = error_lk[i] * error_lk[i] / nu_lk * ga_term;
+    double sum_lga_h_denom = (1 + ga_ker_term) * (1 + ga_ker_term);
+    sum_lga_h += ga_ker_term / sum_lga_h_denom;
+  }
+  return (4.0 * n * ga_def2) / ((ga_def2 + 1.0) * (ga_def2 + 1.0)) + hyper_d * ga_def + 2 *(nu_lk + 1) * sum_lga_h;
+}
+
+// [[Rcpp::export]]
+Rcpp::NumericVector loggamma_neg_lk_cpp_nlm(double logga_lk, double nu_lk, Rcpp::NumericVector error_lk,
+                                            double hyper_c, double hyper_d) {
+  // Get negative log likelihood evaluated
+  double neg_loggamma_lk = loggamma_neg_lk_cpp(logga_lk, nu_lk, error_lk, hyper_c, hyper_d);
+  // Get gradient of negative log likelihood evaluated
+  double neg_loggamma_grad = loggamma_neg_gradient_cpp(logga_lk, nu_lk, error_lk, hyper_c, hyper_d);
+  // Get hessian of negative log likelihood evaluated
+  double neg_loggamma_hess = loggamma_neg_hessian_cpp(logga_lk, nu_lk, error_lk, hyper_c, hyper_d);
+
+  // Wrap as NumericVector of length 1
+  Rcpp::NumericVector loggamma_neglog(1);
+  loggamma_neglog[0] = neg_loggamma_lk;
+
+  Rcpp::NumericVector gradient_lga_out(1, neg_loggamma_grad);
+  Rcpp::NumericMatrix hessian_lga_out(1, 1);
+  hessian_lga_out(0, 0) = neg_loggamma_hess;
+
+  // Attach attributes
+  loggamma_neglog.attr("gradient") = gradient_lga_out;
+  loggamma_neglog.attr("hessian")  = hessian_lga_out;
+
+  return loggamma_neglog;
+}
 
 // [[Rcpp::export]]
 arma::vec beta_coordinate_descent_cpp(

@@ -6,22 +6,23 @@
 \usage{
 wrapper_sigma(
   sigma.lk,
-  beta0.lk,
   beta.lk,
+  beta0.lk,
   nu.lk,
   gamma.lk,
   hyper.nu.sigma,
   hyper.A.sigma,
   Y.lk,
-  X.lk
+  X.lk,
+  opt.method.sigma = getOption("TDVS_sigma_method", "nlm")
 )
 }
 \arguments{
 \item{sigma.lk}{Initial sigma parameter}
 
-\item{beta0.lk}{beta0 parameter}
-
 \item{beta.lk}{Beta parameter}
+
+\item{beta0.lk}{beta0 parameter}
 
 \item{nu.lk}{Nu parameter}
 
@@ -34,6 +35,8 @@ wrapper_sigma(
 \item{Y.lk}{Response vector}
 
 \item{X.lk}{Predictor matrix}
+
+\item{opt.method.sigma}{method Estimation function for sigma (default: Newton-Raphson method implemented by R nlm() function)}
 }
 \value{
 Optimized beta0 parameter

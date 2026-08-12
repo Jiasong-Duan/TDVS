@@ -42,6 +42,7 @@ This is a basic example which shows you how to perform variable selection with t
 
 ```{r example}
 library(TDVS)
+
 # Load example data containing:
 # - Response (Y): matrix with 100 subjects (rows) and 1 column
 # - Predictors (X): matrix with 100 subjects (rows) and 8 predictors (columns)

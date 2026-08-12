@@ -4,7 +4,14 @@
 \alias{wrapper_gamma}
 \title{Wrapper function for gamma optimization}
 \usage{
-wrapper_gamma(gamma_upd, nu, error_lk, hyper_c, hyper_d)
+wrapper_gamma(
+  gamma_upd,
+  nu,
+  error_lk,
+  hyper_c,
+  hyper_d,
+  opt.method.gamma = getOption("TDVS_gamma_method", "nlm")
+)
 }
 \arguments{
 \item{gamma_upd}{Initial gamma parameter}
@@ -16,6 +23,8 @@ wrapper_gamma(gamma_upd, nu, error_lk, hyper_c, hyper_d)
 \item{hyper_c}{the shape hyperparameter in gamma's gamma prior}
 
 \item{hyper_d}{the rate hyperparameter in gamma's gamma prior}
+
+\item{opt.method.gamma}{method Estimation function for gamma (default: Newton-Raphson method implemented by R nlm() function)}
 }
 \value{
 Optimized gamma parameter

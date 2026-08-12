@@ -18,16 +18,6 @@ arma::vec beta_neg_gradient_cpp(
 arma::mat beta_neg_hessian_cpp(
     arma::vec beta_lk, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec betaPRE, double t0, double t1, arma::vec Y_lk, arma::mat X_lk);
-double beta0_neg_lk_cpp(double beta0_lk, arma::vec beta_lk, double sigma_lk, double nu_lk, double gamma_lk,
-                        double hyper_mu_beta0, double hyper_sigma_beta0,
-                        arma::vec Y_lk, arma::mat X_lk);
-double sigma_neg_lk_cpp(double sigma_lk, double beta0_lk, arma::vec beta_lk, double nu_lk, double gamma_lk,
-                        double hyper_nu_sigma, double hyper_A_sigma,
-                        arma::vec Y_lk, arma::mat X_lk);
-double nu_neg_lk_cpp(double nu_lk, double ga_lk, Rcpp::NumericVector error_lk,
-                     double hyper_mu=1, double hyper_sigma=1);
-double gamma_neg_lk_cpp(double ga_lk, double nu_lk, Rcpp::NumericVector error_lk,
-                        double hyper_c=0.0001, double hyper_d=0.0001);
 double jbeta_neg_gradient_cpp(
     int j_index, arma::vec beta_lk, double beta0_lk, double sigma_lk, double nu_lk, double ga_lk,
     arma::vec betaPRE, double t0, double t1, arma::vec Y_lk, arma::mat X_lk,
@@ -69,6 +59,53 @@ arma::vec beta_coordinate_descent_cpp_nlm(
     arma::vec betaPRE, double t0, double t1,
     arma::vec Y_cd, arma::mat X_cd, double theta_cd,
     int maX_cd_iter, double tol);
+double beta0_neg_lk_cpp(double beta0_lk, arma::vec beta_lk, double sigma_lk, double nu_lk, double gamma_lk,
+                        double hyper_mu_beta0, double hyper_sigma_beta0,
+                        arma::vec Y_lk, arma::mat X_lk);
+double beta0_neg_gradient_cpp(double beta0_lk, arma::vec beta_lk, double sigma_lk, double nu_lk, double gamma_lk,
+                              double hyper_mu_beta0, double hyper_sigma_beta0,
+                              arma::vec Y_lk, arma::mat X_lk);
+double beta0_neg_hessian_cpp(double beta0_lk, arma::vec beta_lk, double sigma_lk, double nu_lk, double gamma_lk,
+                              double hyper_mu_beta0, double hyper_sigma_beta0,
+                              arma::vec Y_lk, arma::mat X_lk);
+Rcpp::NumericVector beta0_neg_lk_cpp_nlm(double beta0_lk, arma::vec beta_lk, double sigma_lk, double nu_lk, double gamma_lk,
+                              double hyper_mu_beta0, double hyper_sigma_beta0,
+                              arma::vec Y_lk, arma::mat X_lk);
+double sigma_neg_lk_cpp(double sigma_lk, double beta0_lk, arma::vec beta_lk, double nu_lk, double gamma_lk,
+                        double hyper_nu_sigma, double hyper_A_sigma,
+                        arma::vec Y_lk, arma::mat X_lk);
+double logsigma_neg_lk_cpp(double logsigma_lk, double beta0_lk, arma::vec beta_lk, double nu_lk, double gamma_lk,
+                           double hyper_nu_sigma, double hyper_A_sigma,
+                           arma::vec Y_lk, arma::mat X_lk);
+double logsigma_neg_gradient_cpp(double logsigma_lk, double beta0_lk, arma::vec beta_lk, double nu_lk, double gamma_lk,
+                                 double hyper_nu_sigma, double hyper_A_sigma,
+                                 arma::vec Y_lk, arma::mat X_lk);
+double logsigma_neg_hessian_cpp(double logsigma_lk, double beta0_lk, arma::vec beta_lk, double nu_lk, double gamma_lk,
+                                double hyper_nu_sigma, double hyper_A_sigma,
+                                arma::vec Y_lk, arma::mat X_lk);
+Rcpp::NumericVector logsigma_neg_lk_cpp_nlm(double logsigma_lk, double beta0_lk, arma::vec beta_lk, double nu_lk, double gamma_lk,
+                                            double hyper_nu_sigma, double hyper_A_sigma,
+                                            arma::vec Y_lk, arma::mat X_lk);
+double nu_neg_lk_cpp(double nu_lk, double ga_lk, Rcpp::NumericVector error_lk,
+                     double hyper_mu=1, double hyper_sigma=1);
+double lognu_neg_lk_cpp(double lognu_lk, double ga_lk, Rcpp::NumericVector error_lk,
+                        double hyper_mu, double hyper_sigma);
+double lognu_neg_gradient_cpp(double lognu_lk, double ga_lk, Rcpp::NumericVector error_lk,
+                        double hyper_mu, double hyper_sigma);
+double lognu_neg_hessian_cpp(double lognu_lk, double ga_lk, Rcpp::NumericVector error_lk,
+                        double hyper_mu, double hyper_sigma);
+Rcpp::NumericVector lognu_neg_lk_cpp_nlm(double lognu_lk, double ga_lk, Rcpp::NumericVector error_lk,
+                                         double hyper_mu, double hyper_sigma);
+double gamma_neg_lk_cpp(double ga_lk, double nu_lk, Rcpp::NumericVector error_lk,
+                        double hyper_c=0.0001, double hyper_d=0.0001);
+double loggamma_neg_lk_cpp(double logga_lk, double nu_lk, Rcpp::NumericVector error_lk,
+                           double hyper_c, double hyper_d);
+double loggamma_neg_gradient_cpp(double logga_lk, double nu_lk, Rcpp::NumericVector error_lk,
+                           double hyper_c, double hyper_d);
+double loggamma_neg_hessian_cpp(double logga_lk, double nu_lk, Rcpp::NumericVector error_lk,
+                           double hyper_c, double hyper_d);
+Rcpp::NumericVector loggamma_neg_lk_cpp_nlm(double logga_lk, double nu_lk, Rcpp::NumericVector error_lk,
+                                            double hyper_c, double hyper_d);
 Rcpp::List TDVS_EM_cpp(
     Rcpp::List dataXY,
     arma::vec init_beta,

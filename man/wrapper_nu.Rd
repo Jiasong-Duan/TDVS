@@ -4,7 +4,14 @@
 \alias{wrapper_nu}
 \title{Wrapper function for nu optimization}
 \usage{
-wrapper_nu(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma)
+wrapper_nu(
+  nu,
+  gamma_nu,
+  error_lk,
+  hyper_mu,
+  hyper_sigma,
+  opt.method.nu = getOption("TDVS_nu_method", "nlm")
+)
 }
 \arguments{
 \item{nu}{Initial nu parameter}
@@ -16,6 +23,8 @@ wrapper_nu(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma)
 \item{hyper_mu}{the location hyperparameter in nu's log-normal prior}
 
 \item{hyper_sigma}{the scale hyperparameter in nu's log-normal prior}
+
+\item{opt.method.nu}{method Estimation function for nu (default: Newton-Raphson method implemented by R nlm() function)}
 }
 \value{
 Optimized nu parameter
