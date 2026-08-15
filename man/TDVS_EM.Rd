@@ -27,7 +27,8 @@ TDVS_EM(
   max_iter = 100,
   tol = 1e-06,
   conv_type = "param",
-  beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik")
+  beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
+  exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")
 )
 }
 \arguments{
@@ -76,6 +77,8 @@ TDVS_EM(
 \item{conv_type}{Convergence type (default: "param")}
 
 \item{beta_method}{Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".}
+
+\item{exclude_beta_method}{Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".}
 }
 \value{
 List of results from the EM algorithm

@@ -28,7 +28,8 @@ per_group_fun(
   max_iter_per = 100,
   tol_per = 1e-06,
   add_correc_CiS = 0.001,
-  beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik")
+  beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
+  exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")
 )
 }
 \arguments{
@@ -79,6 +80,8 @@ per_group_fun(
 \item{add_correc_CiS}{Correction factor for CiS (default: 1e-3)}
 
 \item{beta_method}{Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".}
+
+\item{exclude_beta_method}{Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".}
 }
 \value{
 Group permutation function value

@@ -14,7 +14,7 @@ wrapper_beta0(
   hyper.sigma.beta0,
   Y.lk,
   X.lk,
-  opt.method.beta0 = getOption("TDVS_beta0_method", "nlm")
+  opt.method.beta0 = getOption("TDVS_exclude_beta_method", "BFGS")
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ wrapper_beta0(
 
 \item{X.lk}{Predictor matrix}
 
-\item{opt.method.beta0}{method Estimation function for beta0 (default: Newton-Raphson method implemented by R nlm() function)}
+\item{opt.method.beta0}{method Estimation function for beta0 (default: quasi-Newton method with analytical gradient implemented by R optim() function)}
 }
 \value{
 Optimized beta0 parameter

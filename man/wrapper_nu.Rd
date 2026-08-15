@@ -10,7 +10,7 @@ wrapper_nu(
   error_lk,
   hyper_mu,
   hyper_sigma,
-  opt.method.nu = getOption("TDVS_nu_method", "nlm")
+  opt.method.nu = getOption("TDVS_exclude_beta_method", "BFGS")
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ wrapper_nu(
 
 \item{hyper_sigma}{the scale hyperparameter in nu's log-normal prior}
 
-\item{opt.method.nu}{method Estimation function for nu (default: Newton-Raphson method implemented by R nlm() function)}
+\item{opt.method.nu}{method Estimation function for nu (default: quasi-Newton method with analytical gradient implemented by R optim() function)}
 }
 \value{
 Optimized nu parameter

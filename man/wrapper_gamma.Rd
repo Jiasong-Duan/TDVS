@@ -10,7 +10,7 @@ wrapper_gamma(
   error_lk,
   hyper_c,
   hyper_d,
-  opt.method.gamma = getOption("TDVS_gamma_method", "nlm")
+  opt.method.gamma = getOption("TDVS_exclude_beta_method", "BFGS")
 )
 }
 \arguments{
@@ -24,7 +24,7 @@ wrapper_gamma(
 
 \item{hyper_d}{the rate hyperparameter in gamma's gamma prior}
 
-\item{opt.method.gamma}{method Estimation function for gamma (default: Newton-Raphson method implemented by R nlm() function)}
+\item{opt.method.gamma}{method Estimation function for gamma (default: quasi-Newton method with analytical gradient implemented by R optim() function)}
 }
 \value{
 Optimized gamma parameter

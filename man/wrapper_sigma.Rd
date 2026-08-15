@@ -14,7 +14,7 @@ wrapper_sigma(
   hyper.A.sigma,
   Y.lk,
   X.lk,
-  opt.method.sigma = getOption("TDVS_sigma_method", "nlm")
+  opt.method.sigma = getOption("TDVS_exclude_beta_method", "BFGS")
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ wrapper_sigma(
 
 \item{X.lk}{Predictor matrix}
 
-\item{opt.method.sigma}{method Estimation function for sigma (default: Newton-Raphson method implemented by R nlm() function)}
+\item{opt.method.sigma}{method Estimation function for sigma (default: quasi-Newton method with analytical gradient implemented by R optim() function)}
 }
 \value{
 Optimized beta0 parameter

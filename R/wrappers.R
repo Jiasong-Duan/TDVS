@@ -201,12 +201,26 @@ wrapper_beta_cd_nlm <- function(j, beta, beta0, sigma_bcd, nu, gamma_bcd, betaPR
 #' @param hyper.sigma.beta0 the variance hyperparameter in beta0's Normal prior
 #' @param Y.lk Response vector
 #' @param X.lk Predictor matrix
-#' @param opt.method.beta0 method Estimation function for beta0 (default: Newton-Raphson method implemented by R nlm() function)
+#' @param opt.method.beta0 method Estimation function for beta0 (default: quasi-Newton method with analytical gradient implemented by R optim() function)
 #' @return Optimized beta0 parameter
 #' @export
-wrapper_beta0 <- function(beta0.lk, beta.lk, sigma.lk, nu.lk, gamma.lk, hyper.mu.beta0, hyper.sigma.beta0, Y.lk, X.lk, opt.method.beta0 = getOption("TDVS_beta0_method", "nlm")){
-  opt.method.beta0 <- match.arg(opt.method.beta0, c("nlm", "constraint_quasi_Newton"))
-  if (opt.method.beta0 == "nlm"){
+wrapper_beta0 <- function(beta0.lk, beta.lk, sigma.lk, nu.lk, gamma.lk, hyper.mu.beta0, hyper.sigma.beta0, Y.lk, X.lk,
+                          opt.method.beta0 = getOption("TDVS_exclude_beta_method", "BFGS")){
+  opt.method.beta0 <- match.arg(opt.method.beta0, c("BFGS", "nlm", "BFGS_nogra"))
+  if (opt.method.beta0 == "BFGS"){
+    func_beta0_BFGS <- function(x_b0) beta0_neg_lk_cpp(beta0_lk=x_b0, beta_lk=beta.lk, sigma_lk= sigma.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
+                                                          hyper_mu_beta0= hyper.mu.beta0, hyper_sigma_beta0= hyper.sigma.beta0, Y_lk=Y.lk, X_lk=X.lk)
+    grad_beta0_BFGS <- function(x_b0) beta0_neg_gradient_cpp(beta0_lk=x_b0, beta_lk=beta.lk, sigma_lk= sigma.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
+                                                           hyper_mu_beta0= hyper.mu.beta0, hyper_sigma_beta0= hyper.sigma.beta0, Y_lk=Y.lk, X_lk=X.lk)
+    result_beta0_BFGS <- tryCatch(
+      optim(par = beta0.lk, fn = func_beta0_BFGS, gr = grad_beta0_BFGS, method = "BFGS"),
+      error = function(e) {
+        warning("beta0 optimization BFGS with analytical gradient failed: ", conditionMessage(e))
+        list(par = NA)
+      }
+    )
+    beta0_est <- result_beta0_BFGS$par
+  } else if (opt.method.beta0 == "nlm"){
     func_beta0_nlm <- function(x_b0) beta0_neg_lk_cpp_nlm(beta0_lk=x_b0, beta_lk=beta.lk, sigma_lk= sigma.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
                                          hyper_mu_beta0= hyper.mu.beta0, hyper_sigma_beta0= hyper.sigma.beta0, Y_lk=Y.lk, X_lk=X.lk)
     result_beta0_nlm <- tryCatch(
@@ -217,13 +231,13 @@ wrapper_beta0 <- function(beta0.lk, beta.lk, sigma.lk, nu.lk, gamma.lk, hyper.mu
       }
     )
     beta0_est <- result_beta0_nlm$estimate
-  } else if (opt.method.beta0 == "constraint_quasi_Newton"){
+  } else if (opt.method.beta0 == "BFGS_nogra"){
     func_beta0_lk <- function(x) beta0_neg_lk_cpp(beta0_lk=x, beta_lk=beta.lk, sigma_lk= sigma.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
                                          hyper_mu_beta0= hyper.mu.beta0, hyper_sigma_beta0= hyper.sigma.beta0, Y_lk=Y.lk, X_lk=X.lk)
     result_beta0_lk <- tryCatch(
       optim(par = beta0.lk, fn = func_beta0_lk, method = "BFGS"),
       error = function(e) {
-        warning("beta0 optimization failed: ", conditionMessage(e))
+        warning("beta0 optimization BFGS without analytical gradient failed: ", conditionMessage(e))
         list(par = NA)
       }
     )
@@ -243,12 +257,27 @@ wrapper_beta0 <- function(beta0.lk, beta.lk, sigma.lk, nu.lk, gamma.lk, hyper.mu
 #' @param hyper.A.sigma the scale hyperparameter in sigma's half t prior
 #' @param Y.lk Response vector
 #' @param X.lk Predictor matrix
-#' @param opt.method.sigma method Estimation function for sigma (default: Newton-Raphson method implemented by R nlm() function)
+#' @param opt.method.sigma method Estimation function for sigma (default: quasi-Newton method with analytical gradient implemented by R optim() function)
 #' @return Optimized beta0 parameter
 #' @export
-wrapper_sigma <- function(sigma.lk, beta.lk, beta0.lk, nu.lk, gamma.lk, hyper.nu.sigma, hyper.A.sigma, Y.lk, X.lk, opt.method.sigma = getOption("TDVS_sigma_method", "nlm")){
-  opt.method.sigma <- match.arg(opt.method.sigma, c("nlm", "constraint_quasi_Newton"))
-  if (opt.method.sigma == "nlm"){
+wrapper_sigma <- function(sigma.lk, beta.lk, beta0.lk, nu.lk, gamma.lk, hyper.nu.sigma, hyper.A.sigma, Y.lk, X.lk,
+                          opt.method.sigma = getOption("TDVS_exclude_beta_method", "BFGS")){
+  opt.method.sigma <- match.arg(opt.method.sigma, c("BFGS", "nlm", "BFGS_nogra"))
+  if (opt.method.sigma == "BFGS"){
+    lsigma <- log(sigma.lk)
+    func_logsigma_BFGS <- function(x_lsigma) logsigma_neg_lk_cpp(logsigma_lk=x_lsigma, beta_lk=beta.lk, beta0_lk=beta0.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
+                                                                   hyper_nu_sigma=hyper.nu.sigma, hyper_A_sigma=hyper.A.sigma, Y_lk=Y.lk, X_lk=X.lk)
+    grad_logsigma_BFGS <- function(x_lsigma) logsigma_neg_gradient_cpp(logsigma_lk=x_lsigma, beta_lk=beta.lk, beta0_lk=beta0.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
+                                                               hyper_nu_sigma=hyper.nu.sigma, hyper_A_sigma=hyper.A.sigma, Y_lk=Y.lk, X_lk=X.lk)
+    result_logsigma_BFGS <- tryCatch(
+      optim(par = lsigma, fn = func_logsigma_BFGS, gr= grad_logsigma_BFGS, method = "BFGS"),
+      error = function(e) {
+        warning("log(sigma) optimization BFGS with analytical gradient failed: ", conditionMessage(e))
+        list(par = NA)
+      }
+    )
+    sigma_est <- exp(result_logsigma_BFGS$par)
+  } else if (opt.method.sigma == "nlm"){
     lsigma <- log(sigma.lk)
     func_logsigma_lk <- function(x_lsigma) logsigma_neg_lk_cpp_nlm(logsigma_lk=x_lsigma, beta_lk=beta.lk, beta0_lk=beta0.lk, nu_lk=nu.lk, gamma_lk=gamma.lk,
                                                             hyper_nu_sigma=hyper.nu.sigma, hyper_A_sigma=hyper.A.sigma, Y_lk=Y.lk, X_lk=X.lk)
@@ -260,7 +289,7 @@ wrapper_sigma <- function(sigma.lk, beta.lk, beta0.lk, nu.lk, gamma.lk, hyper.nu
       }
     )
     sigma_est <- exp(result_logsigma$estimate)
-  } else if (opt.method.sigma == "constraint_quasi_Newton"){
+  } else if (opt.method.sigma == "BFGS_nogra"){
     func_sigma_lk <- function(x_sigma) sigma_neg_lk_cpp(sigma_lk= x_sigma, beta_lk= beta.lk, beta0_lk= beta0.lk, nu_lk= nu.lk, gamma_lk= gamma.lk,
                                        hyper_nu_sigma= hyper.nu.sigma, hyper_A_sigma= hyper.A.sigma, Y_lk= Y.lk, X_lk= X.lk)
     result_sigma <- tryCatch(
@@ -282,12 +311,27 @@ wrapper_sigma <- function(sigma.lk, beta.lk, beta0.lk, nu.lk, gamma.lk, hyper.nu
 #' @param error_lk Error vector
 #' @param hyper_mu the location hyperparameter in nu's log-normal prior
 #' @param hyper_sigma the scale hyperparameter in nu's log-normal prior
-#' @param opt.method.nu method Estimation function for nu (default: Newton-Raphson method implemented by R nlm() function)
+#' @param opt.method.nu method Estimation function for nu (default: quasi-Newton method with analytical gradient implemented by R optim() function)
 #' @return Optimized nu parameter
 #' @export
-wrapper_nu <- function(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma, opt.method.nu = getOption("TDVS_nu_method", "nlm")) {
-  opt.method.nu <- match.arg(opt.method.nu, c("nlm", "constraint_quasi_Newton"))
-  if (opt.method.nu == "nlm"){
+wrapper_nu <- function(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma,
+                       opt.method.nu = getOption("TDVS_exclude_beta_method", "BFGS")) {
+  opt.method.nu <- match.arg(opt.method.nu, c("BFGS", "nlm", "BFGS_nogra"))
+  if (opt.method.nu == "BFGS"){
+    lnu <- log(nu)
+    func_lognu_BFGS <- function(x_lnu) lognu_neg_lk_cpp(lognu_lk= x_lnu, ga_lk=gamma_nu, error_lk=error_lk,
+                                                          hyper_mu=hyper_mu, hyper_sigma=hyper_sigma)
+    grad_lognu_BFGS <- function(x_lnu) lognu_neg_gradient_cpp(lognu_lk= x_lnu, ga_lk=gamma_nu, error_lk=error_lk,
+                                                        hyper_mu=hyper_mu, hyper_sigma=hyper_sigma)
+    result_lognu_BFGS <- tryCatch(
+      optim(par = lnu, fn = func_lognu_BFGS, gr = grad_lognu_BFGS, method = "BFGS"),
+      error = function(e) {
+        warning("log(nu) optimization BFGS with analytical gradient failed: ", conditionMessage(e))
+        list(par = NA)
+      }
+    )
+    nu_est <- exp(result_lognu_BFGS$par)
+  } else if (opt.method.nu == "nlm"){
     lnu <- log(nu)
     func_lognu_lk <- function(x_lnu) lognu_neg_lk_cpp_nlm(lognu_lk= x_lnu, ga_lk=gamma_nu, error_lk=error_lk,
                                                           hyper_mu=hyper_mu, hyper_sigma=hyper_sigma)
@@ -299,7 +343,7 @@ wrapper_nu <- function(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma, opt.method
         }
       )
       nu_est <- exp(result_lognu$estimate)
-  } else if (opt.method.nu == "constraint_quasi_Newton"){
+  } else if (opt.method.nu == "BFGS_nogra"){
     func_nu_lk <- function(x_nu) nu_neg_lk_cpp(nu_lk=x_nu, ga_lk=gamma_nu, error_lk=error_lk,
                                       hyper_mu=hyper_mu, hyper_sigma=hyper_sigma)
     result_nu <- tryCatch(
@@ -321,12 +365,25 @@ wrapper_nu <- function(nu, gamma_nu, error_lk, hyper_mu, hyper_sigma, opt.method
 #' @param error_lk Error vector
 #' @param hyper_c the shape hyperparameter in gamma's gamma prior
 #' @param hyper_d the rate hyperparameter in gamma's gamma prior
-#' @param opt.method.gamma method Estimation function for gamma (default: Newton-Raphson method implemented by R nlm() function)
+#' @param opt.method.gamma method Estimation function for gamma (default: quasi-Newton method with analytical gradient implemented by R optim() function)
 #' @return Optimized gamma parameter
 #' @export
-wrapper_gamma <- function(gamma_upd, nu, error_lk, hyper_c, hyper_d, opt.method.gamma = getOption("TDVS_gamma_method", "nlm")) {
-  opt.method.gamma <- match.arg(opt.method.gamma, c("nlm", "constraint_quasi_Newton"))
-  if (opt.method.gamma == "nlm"){
+wrapper_gamma <- function(gamma_upd, nu, error_lk, hyper_c, hyper_d,
+                          opt.method.gamma = getOption("TDVS_exclude_beta_method", "BFGS")) {
+  opt.method.gamma <- match.arg(opt.method.gamma, c("BFGS", "nlm", "BFGS_nogra"))
+  if (opt.method.gamma == "BFGS"){
+    lga <- log(gamma_upd)
+    func_loggamma_BFGS <- function(x_lga) loggamma_neg_lk_cpp(logga_lk=x_lga, nu_lk=nu, error_lk=error_lk, hyper_c=hyper_c, hyper_d=hyper_d)
+    grad_loggamma_BFGS <- function(x_lga) loggamma_neg_gradient_cpp(logga_lk=x_lga, nu_lk=nu, error_lk=error_lk, hyper_c=hyper_c, hyper_d=hyper_d)
+    result_loggamma_BFGS <- tryCatch(
+      optim(par = lga, fn = func_loggamma_BFGS, gr = grad_loggamma_BFGS, method = "BFGS"),
+      error = function(e) {
+        warning("log(gamma) optimization BFGS with analytical gradient failed: ", conditionMessage(e))
+        list(par = NA)
+      }
+    )
+    gamma_est <- exp(result_loggamma_BFGS$par)
+  } else if (opt.method.gamma == "nlm"){
     lga <- log(gamma_upd)
     func_loggamma_lk <- function(x_lga) loggamma_neg_lk_cpp_nlm(logga_lk=x_lga, nu_lk=nu, error_lk=error_lk, hyper_c=hyper_c, hyper_d=hyper_d)
     result_loggamma <- tryCatch(
@@ -337,7 +394,7 @@ wrapper_gamma <- function(gamma_upd, nu, error_lk, hyper_c, hyper_d, opt.method.
       }
     )
     gamma_est <- exp(result_loggamma$estimate)
-  } else if (opt.method.gamma == "constraint_quasi_Newton"){
+  } else if (opt.method.gamma == "BFGS_nogra"){
     func_gamma_lk <- function(x_ga) gamma_neg_lk_cpp(ga_lk=x_ga, nu_lk=nu, error_lk=error_lk, hyper_c=hyper_c, hyper_d=hyper_d)
     result_gamma <- tryCatch(
       optim(par = gamma_upd, fn = func_gamma_lk, method = "L-BFGS-B", lower = 0.01, upper = 100),
@@ -376,6 +433,7 @@ wrapper_gamma <- function(gamma_upd, nu, error_lk, hyper_c, hyper_d, opt.method.
 #' @param tol Convergence tolerance (default: 1e-6)
 #' @param conv_type Convergence type (default: "param")
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
+#' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
 #' @return List of results from the EM algorithm
 #' @export
 TDVS_EM <- function(
@@ -401,13 +459,20 @@ TDVS_EM <- function(
     max_iter = 100,
     tol = 1e-6,
     conv_type = "param",
-    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik")) {
+    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
+    exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")) {
 
   #Pick the estimation method for beta estimation
   beta.method <- match.arg(beta_method)
   # set temporarily for dispatcher
   old <- options(TDVS_beta_method = beta.method)
   on.exit(options(old), add = TRUE)
+
+  #Pick the estimation method for parameters other than beta
+  exclude.beta.method <- match.arg(exclude_beta_method)
+  # set temporarily for dispatcher
+  old_nobeta <- options(TDVS_exclude_beta_method = exclude.beta.method)
+  on.exit(options(old_nobeta), add = TRUE)
 
   TDVS_EM_cpp(
     dataXY = dataXY,
@@ -516,6 +581,7 @@ CiS_j_fun <- function(test_index,
 #' @param tol_per Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
+#' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
 #' @return Permutation function value
 #' @export
 per_fun <- function(j_index,
@@ -541,13 +607,20 @@ per_fun <- function(j_index,
                     max_iter_per = 100,
                     tol_per = 1e-6,
                     add_correc_CiS = 0.001,
-                    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik")) {
+                    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
+                    exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")) {
 
   #Pick the estimation method for beta estimation
   beta.method <- match.arg(beta_method)
   # set temporarily for dispatcher
   old <- options(TDVS_beta_method = beta.method)
   on.exit(options(old), add = TRUE)
+
+  #Pick the estimation method for parameters other than beta
+  exclude.beta.method <- match.arg(exclude_beta_method)
+  # set temporarily for dispatcher
+  old_nobeta <- options(TDVS_exclude_beta_method = exclude.beta.method)
+  on.exit(options(old_nobeta), add = TRUE)
 
   per_fun_cpp(
     j_index = j_index,
@@ -635,6 +708,7 @@ CiS_group_fun <- function(test_indices,
 #' @param tol_per Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
+#' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
 #' @return Group permutation function value
 #' @export
 per_group_fun <- function(j_indices,
@@ -660,13 +734,20 @@ per_group_fun <- function(j_indices,
                           max_iter_per = 100,
                           tol_per = 1e-6,
                           add_correc_CiS = 0.001,
-                          beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik")) {
+                          beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
+                          exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")) {
 
   #Pick the estimation method for beta estimation
   beta.method <- match.arg(beta_method)
   # set temporarily for dispatcher
   old <- options(TDVS_beta_method = beta.method)
   on.exit(options(old), add = TRUE)
+
+  #Pick the estimation method for parameters other than beta
+  exclude.beta.method <- match.arg(exclude_beta_method)
+  # set temporarily for dispatcher
+  old_nobeta <- options(TDVS_exclude_beta_method = exclude.beta.method)
+  on.exit(options(old_nobeta), add = TRUE)
 
   per_group_fun_cpp(
     j_indices = j_indices,
@@ -722,6 +803,7 @@ per_group_fun <- function(j_indices,
 #' @param tol_TDVS Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
+#' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
 #' @return List containing variable selection results
 #' @export
 TDVS <- function(
@@ -749,13 +831,20 @@ TDVS <- function(
     max_iter_TDVS = 100,
     tol_TDVS = 1e-6,
     add_correc_CiS = 0.001,
-    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik")) {
+    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
+    exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")) {
 
   #Pick the estimation method for beta estimation
   beta.method <- match.arg(beta_method)
   # set temporarily for dispatcher
   old <- options(TDVS_beta_method = beta.method)
   on.exit(options(old), add = TRUE)
+
+  #Pick the estimation method for parameters other than beta
+  exclude.beta.method <- match.arg(exclude_beta_method)
+  # set temporarily for dispatcher
+  old_nobeta <- options(TDVS_exclude_beta_method = exclude.beta.method)
+  on.exit(options(old_nobeta), add = TRUE)
 
   TDVS_cpp(
     dataXY = dataXY,
@@ -813,6 +902,7 @@ TDVS <- function(
 #' @param tol_TDVS Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
+#' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
 #' @return List containing variable selection results
 #' @export
 TDVS_j <- function(
@@ -841,13 +931,20 @@ TDVS_j <- function(
     max_iter_TDVS = 100,
     tol_TDVS = 1e-6,
     add_correc_CiS = 0.001,
-    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik")) {
+    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
+    exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")) {
 
   #Pick the estimation method for beta estimation
   beta.method <- match.arg(beta_method)
   # set temporarily for dispatcher
   old <- options(TDVS_beta_method = beta.method)
   on.exit(options(old), add = TRUE)
+
+  #Pick the estimation method for parameters other than beta
+  exclude.beta.method <- match.arg(exclude_beta_method)
+  # set temporarily for dispatcher
+  old_nobeta <- options(TDVS_exclude_beta_method = exclude.beta.method)
+  on.exit(options(old_nobeta), add = TRUE)
 
   TDVS_j_cpp(
     test_index = test_index,
@@ -906,6 +1003,7 @@ TDVS_j <- function(
 #' @param tol_TDVS Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
+#' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
 #' @return List containing variable selection results
 #' @export
 TDVS_group <- function(
@@ -934,13 +1032,20 @@ TDVS_group <- function(
     max_iter_TDVS = 100,
     tol_TDVS = 1e-6,
     add_correc_CiS = 0.001,
-    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik")) {
+    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
+    exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")) {
 
   #Pick the estimation method for beta estimation
   beta.method <- match.arg(beta_method)
   # set temporarily for dispatcher
   old <- options(TDVS_beta_method = beta.method)
   on.exit(options(old), add = TRUE)
+
+  #Pick the estimation method for parameters other than beta
+  exclude.beta.method <- match.arg(exclude_beta_method)
+  # set temporarily for dispatcher
+  old_nobeta <- options(TDVS_exclude_beta_method = exclude.beta.method)
+  on.exit(options(old_nobeta), add = TRUE)
 
   TDVS_group_cpp(
     test_indices = test_indices,
@@ -1003,6 +1108,7 @@ TDVS_group <- function(
 #' @param tol_TDVS Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
+#' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
 #' @return List of multi-stage TDVS results
 #' @export
 TDVS_multi_stage <- function(
@@ -1035,13 +1141,20 @@ TDVS_multi_stage <- function(
     max_iter_TDVS = 100,
     tol_TDVS = 1e-6,
     add_correc_CiS = 0.001,
-    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik")) {
+    beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
+    exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")) {
 
   #Pick the estimation method for beta estimation
   beta.method <- match.arg(beta_method)
   # set temporarily for dispatcher
   old <- options(TDVS_beta_method = beta.method)
   on.exit(options(old), add = TRUE)
+
+  #Pick the estimation method for parameters other than beta
+  exclude.beta.method <- match.arg(exclude_beta_method)
+  # set temporarily for dispatcher
+  old_nobeta <- options(TDVS_exclude_beta_method = exclude.beta.method)
+  on.exit(options(old_nobeta), add = TRUE)
 
   TDVS_multi_stage_cpp(
     dataXY = dataXY,
