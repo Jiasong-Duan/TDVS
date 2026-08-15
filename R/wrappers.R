@@ -292,8 +292,10 @@ wrapper_sigma <- function(sigma.lk, beta.lk, beta0.lk, nu.lk, gamma.lk, hyper.nu
   } else if (opt.method.sigma == "BFGS_nogra"){
     func_sigma_lk <- function(x_sigma) sigma_neg_lk_cpp(sigma_lk= x_sigma, beta_lk= beta.lk, beta0_lk= beta0.lk, nu_lk= nu.lk, gamma_lk= gamma.lk,
                                        hyper_nu_sigma= hyper.nu.sigma, hyper_A_sigma= hyper.A.sigma, Y_lk= Y.lk, X_lk= X.lk)
+    res.0 <- Y.lk - beta0.lk - X.lk %*% beta.lk
+    upper_sigma_upd <- max(100, 10*sd(res.0))
     result_sigma <- tryCatch(
-    optim(par = sigma.lk, fn = func_sigma_lk, method = "L-BFGS-B", lower = 0.01, upper = 100),
+    optim(par = sigma.lk, fn = func_sigma_lk, method = "L-BFGS-B", lower = 0.01, upper = upper_sigma_upd),
     error = function(e) {
       warning("sigma optimization failed: ", conditionMessage(e))
       list(par = NA)
