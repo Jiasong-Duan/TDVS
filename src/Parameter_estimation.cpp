@@ -33,6 +33,7 @@ Rcpp::List TDVS_EM_cpp(
     double hyper_b_theta,
     int max_iter,
     double tol,
+    bool update_sigma,
     std::string conv_type) {
 
   // Extract data of Y and X
@@ -104,7 +105,11 @@ Rcpp::List TDVS_EM_cpp(
       // M-step: update parameters via R wrappers
       beta_upd = Rcpp::as<arma::vec>(wrapper_beta(beta_pre, beta0_pre, sigma_pre, nu_pre, gamma_pre, beta_pre_pre, SS_t0, SS_t1, dat_Y, dat_X, theta_pre));
       beta0_upd = Rcpp::as<double>(wrapper_beta0(beta0_pre, beta_upd, sigma_pre, nu_pre, gamma_pre, hyper_mu_beta0, hyper_sigma_beta0, dat_Y, dat_X));
-      sigma_upd = Rcpp::as<double>(wrapper_sigma(sigma_pre, beta_upd, beta0_upd, nu_pre, gamma_pre, hyper_nu_sigma, hyper_A_sigma, dat_Y, dat_X));
+      if (update_sigma) {
+        sigma_upd = Rcpp::as<double>(wrapper_sigma(sigma_pre, beta_upd, beta0_upd, nu_pre, gamma_pre, hyper_nu_sigma, hyper_A_sigma, dat_Y, dat_X));
+      } else {
+        sigma_upd = 1.0;
+      }
       arma::vec error_upd = (dat_Y - beta0_upd - dat_X * beta_upd)/sigma_upd;
       nu_upd = Rcpp::as<double>(wrapper_nu(nu_pre, gamma_pre, error_upd, hyper_mu_nu, hyper_sigma_nu));
       gamma_upd = Rcpp::as<double>(wrapper_gamma(gamma_pre, nu_upd, error_upd, hyper_c_gamma, hyper_d_gamma));

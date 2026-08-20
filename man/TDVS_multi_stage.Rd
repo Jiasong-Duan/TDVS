@@ -34,6 +34,7 @@ TDVS_multi_stage(
   max_iter_TDVS = 100,
   tol_TDVS = 1e-06,
   add_correc_CiS = 0.001,
+  update_sigma_TDVS = TRUE,
   beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
   exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")
 )
@@ -96,6 +97,8 @@ TDVS_multi_stage(
 \item{tol_TDVS}{Convergence tolerance (default: 1e-6)}
 
 \item{add_correc_CiS}{Correction factor for CiS (default: 1e-3)}
+
+\item{update_sigma_TDVS}{Binary. Update the parameter sigma or not; if not, it is fixed at 1.0 (default: TRUE)}
 
 \item{beta_method}{Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".}
 

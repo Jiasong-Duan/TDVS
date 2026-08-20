@@ -28,6 +28,7 @@ per_group_fun(
   max_iter_per = 100,
   tol_per = 1e-06,
   add_correc_CiS = 0.001,
+  update_sigma_per = TRUE,
   beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
   exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")
 )
@@ -78,6 +79,8 @@ per_group_fun(
 \item{tol_per}{Convergence tolerance (default: 1e-6)}
 
 \item{add_correc_CiS}{Correction factor for CiS (default: 1e-3)}
+
+\item{update_sigma_per}{Binary. Update the parameter sigma or not; if not, it is fixed at 1.0 (default: TRUE)}
 
 \item{beta_method}{Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".}
 
