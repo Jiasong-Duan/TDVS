@@ -34,6 +34,7 @@ Rcpp::List TDVS_EM_cpp(
     int max_iter,
     double tol,
     bool update_sigma,
+    double fixed_sigma,
     std::string conv_type) {
 
   // Extract data of Y and X
@@ -103,24 +104,32 @@ Rcpp::List TDVS_EM_cpp(
     // M-step
     try {
       // M-step: update parameters via R wrappers
+      //Rcpp::Rcout << "Iteration " << iter + 1 << ": beta update\n";
       beta_upd = Rcpp::as<arma::vec>(wrapper_beta(beta_pre, beta0_pre, sigma_pre, nu_pre, gamma_pre, beta_pre_pre, SS_t0, SS_t1, dat_Y, dat_X, theta_pre));
+      //Rcpp::Rcout << "Iteration " << iter + 1 << ": beta0 update\n";
       beta0_upd = Rcpp::as<double>(wrapper_beta0(beta0_pre, beta_upd, sigma_pre, nu_pre, gamma_pre, hyper_mu_beta0, hyper_sigma_beta0, dat_Y, dat_X));
+      //Rcpp::Rcout << "Iteration " << iter + 1 << ": sigma update\n";
       if (update_sigma) {
         sigma_upd = Rcpp::as<double>(wrapper_sigma(sigma_pre, beta_upd, beta0_upd, nu_pre, gamma_pre, hyper_nu_sigma, hyper_A_sigma, dat_Y, dat_X));
       } else {
-        sigma_upd = 1.0;
+        sigma_upd = fixed_sigma;
       }
       arma::vec error_upd = (dat_Y - beta0_upd - dat_X * beta_upd)/sigma_upd;
+      //Rcpp::Rcout << "Iteration " << iter + 1 << ": nu update\n";
       nu_upd = Rcpp::as<double>(wrapper_nu(nu_pre, gamma_pre, error_upd, hyper_mu_nu, hyper_sigma_nu));
+      //Rcpp::Rcout << "Iteration " << iter + 1 << ": gamma update\n";
       gamma_upd = Rcpp::as<double>(wrapper_gamma(gamma_pre, nu_upd, error_upd, hyper_c_gamma, hyper_d_gamma));
       arma::vec prob_indiv = 1/(1+(SS_t0 * (1-theta_pre) / (SS_t1 * theta_pre)) * exp(-abs(beta_upd) * (SS_t0-SS_t1)));
       double sum_prob_indiv = arma::sum(prob_indiv);
       theta_upd = (sum_prob_indiv + hyper_a_theta - 1)/(hyper_a_theta + p + hyper_b_theta_val -2);
-      //    Rcpp::Rcout << "Iter: " << iter+1 << ",  beta0: " << beta0_upd << ", nu: " << nu_upd << ", gamma: " << gamma_upd << ", theta: " << theta_upd << std::endl;
-    } catch (...) {
-      Rcpp::stop("Error in optmization during iteration %d", iter + 1);
+      //   Rcpp::Rcout << "Iter: " << iter+1 << ",  beta0: " << beta0_upd << ",  sigma: " << sigma_upd << ", nu: " << nu_upd << ", gamma: " << gamma_upd << ", theta: " << theta_upd << std::endl;
+    } catch (const std::exception& e) {
+      Rcpp::stop(
+        "Error in optimization during iteration %d: %s",
+        iter + 1,
+        e.what()
+      );
     }
-
     // Store updates
     beta_hist.col(iter) = beta_upd;
     beta0_hist[iter] = beta0_upd;

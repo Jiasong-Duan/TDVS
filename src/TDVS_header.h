@@ -129,6 +129,7 @@ Rcpp::List TDVS_EM_cpp(
     int max_iter = 100,
     double tol = 1e-6,
     bool update_sigma = TRUE,
+    double fixed_sigma = 1.0,
     std::string conv_type = "param");
 arma::vec slope_error_cpp(const arma::vec& err, double nu_slo, double ga_slo);
 arma::vec curvature_error_cpp(const arma::vec& err, double nu_cur, double ga_cur);
@@ -163,7 +164,8 @@ double per_fun_cpp(int j_index,
                    int max_iter_per = 100,
                    double tol_per = 1e-6,
                    double add_correc_CiS = 0.001,
-                   bool update_sigma_per = TRUE);
+                   bool update_sigma = TRUE,
+                   double fixed_sigma = 1.0);
 double CiS_group_fun_cpp(const arma::uvec& test_indices,
                          const arma::vec& beta_opt,
                          double beta0_opt,
@@ -195,7 +197,8 @@ double per_group_fun_cpp(const arma::uvec& j_indices,
                          int max_iter_per = 100,
                          double tol_per = 1e-6,
                          double add_correc_CiS = 0.001,
-                         bool update_sigma_per = TRUE
+                         bool update_sigma = TRUE,
+                         double fixed_sigma = 1.0
 );
 Rcpp::List TDVS_cpp(
     Rcpp::List dataXY,
@@ -222,7 +225,8 @@ Rcpp::List TDVS_cpp(
     int max_iter_TDVS = 100,
     double tol_TDVS = 1e-6,
     double add_correc_CiS = 0.001,
-    bool update_sigma_TDVS = TRUE
+    bool update_sigma = TRUE,
+    double fixed_sigma = 1.0
 );
 Rcpp::List TDVS_j_cpp(
     int test_index,
@@ -250,7 +254,8 @@ Rcpp::List TDVS_j_cpp(
     int max_iter_TDVS = 100,
     double tol_TDVS = 1e-6,
     double add_correc_CiS = 0.001,
-    bool update_sigma_TDVS = TRUE
+    bool update_sigma = TRUE,
+    double fixed_sigma = 1.0
 );
 Rcpp::List TDVS_group_cpp(
     const arma::uvec& test_indices,
@@ -278,7 +283,9 @@ Rcpp::List TDVS_group_cpp(
     int max_iter_TDVS,
     double tol_TDVS,
     double add_correc_CiS,
-    bool update_sigma_TDVS = TRUE);
+    bool update_sigma = TRUE,
+    double fixed_sigma = 1.0
+);
 Rcpp::List TDVS_multi_stage_cpp(
     Rcpp::List dataXY,
     arma::vec init_beta_TDVS,
@@ -309,5 +316,7 @@ Rcpp::List TDVS_multi_stage_cpp(
     int max_iter_TDVS = 100,
     double tol_TDVS = 1e-6,
     double add_correc_CiS = 0.001,
-    bool update_sigma_TDVS = TRUE);
+    bool update_sigma = TRUE,
+    double fixed_sigma = 1.0
+);
 #endif

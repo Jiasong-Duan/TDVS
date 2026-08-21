@@ -27,6 +27,7 @@ TDVS_EM(
   max_iter = 100,
   tol = 1e-06,
   update_sigma = TRUE,
+  fixed_sigma = 1,
   conv_type = "param",
   beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
   exclude_beta_method = c("BFGS", "nlm", "BFGS_nogra")
@@ -75,7 +76,9 @@ TDVS_EM(
 
 \item{tol}{Convergence tolerance (default: 1e-6)}
 
-\item{update_sigma}{Binary. Update the parameter sigma or not; if not, it is fixed at 1.0 (default: TRUE)}
+\item{update_sigma}{Binary. Update the parameter sigma or not; if not, it is fixed throughout estimation process (default: TRUE)}
+
+\item{fixed_sigma}{A fixed sigma value in estimation if update_sigma = FALSE (default: 1.0)}
 
 \item{conv_type}{Convergence type (default: "param")}
 

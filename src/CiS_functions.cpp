@@ -108,7 +108,9 @@ double per_fun_cpp(int j_index,
                    int max_iter_per,
                    double tol_per,
                    double add_correc_CiS,
-                   bool update_sigma_per) {
+                   bool update_sigma,
+                   double fixed_sigma
+) {
 
   arma::vec dat_Y = dataXY["Y"];
   arma::mat dat_X = dataXY["X"];
@@ -166,7 +168,7 @@ double per_fun_cpp(int j_index,
   Rcpp::List em_results_per_j = TDVS_EM_cpp(dat_per, init_beta_per, init_beta0_per, init_sigma_per, init_nu_per, init_gamma_per, init_theta_per,
                                            SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per,
                                            hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per,
-                                           hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per, update_sigma_per);
+                                           hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per, update_sigma, fixed_sigma);
 
   arma::vec beta_per_j = em_results_per_j["beta"];
   double beta0_per_j = em_results_per_j["beta0"];
@@ -255,7 +257,8 @@ double per_group_fun_cpp(const arma::uvec& j_indices,
                          int max_iter_per,
                          double tol_per,
                          double add_correc_CiS,
-                         bool update_sigma_per) {
+                         bool update_sigma,
+                         double fixed_sigma) {
 
   arma::vec dat_Y = dataXY["Y"];
   arma::mat dat_X = dataXY["X"];
@@ -288,7 +291,7 @@ double per_group_fun_cpp(const arma::uvec& j_indices,
   Rcpp::List em_results = TDVS_EM_cpp(dat_per, init_beta_per, init_beta0_per, init_sigma_per, init_nu_per, init_gamma_per, init_theta_per,
                                       SS_t0_per, SS_t1_per, hyper_mu_beta0_per, hyper_sigma_beta0_per, hyper_nu_sigma_per, hyper_A_sigma_per,
                                       hyper_mu_nu_per, hyper_sigma_nu_per, hyper_c_gamma_per, hyper_d_gamma_per,
-                                      hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per, update_sigma_per);
+                                      hyper_a_theta_per, hyper_b_theta_val, max_iter_per, tol_per, update_sigma, fixed_sigma);
   arma::vec beta_hat = em_results["beta"];
   double beta0_hat = em_results["beta0"];
   double sigma_hat = em_results["sigma"];
