@@ -33,6 +33,7 @@ Rcpp::List TDVS_EM_cpp(
     double hyper_b_theta,
     int max_iter,
     double tol,
+    bool include_sigma,
     bool update_sigma,
     double fixed_sigma,
     std::string conv_type) {
@@ -44,6 +45,12 @@ Rcpp::List TDVS_EM_cpp(
   // Get n and p
   int n = dat_Y.n_elem;
   int p = dat_X.n_cols;
+
+  if (!include_sigma) {
+    update_sigma = false;
+    fixed_sigma = 1.0;
+    init_sigma = 1.0;
+  }
 
   // initial values for parameters
   arma::vec beta_upd=init_beta;
@@ -159,7 +166,6 @@ Rcpp::List TDVS_EM_cpp(
     }
     //Rcpp::Rcout << "diff_val: " << diff_val << std::endl;
     //Rcpp::Rcout << "beta_pre_pre: " << beta_pre_pre << "beta_pre: " << beta_pre << std::endl;
-
   }
   //Rcpp::Rcout << "Iter_out: " << iter << std::endl;
 
@@ -175,6 +181,8 @@ Rcpp::List TDVS_EM_cpp(
     Rcpp::Named("beta") = beta_upd,
     Rcpp::Named("beta0") = beta0_upd,
     Rcpp::Named("sigma") = sigma_upd,
+    Rcpp::Named("include_sigma") = include_sigma,
+    Rcpp::Named("update_sigma") = update_sigma,
     Rcpp::Named("nu") = nu_upd,
     Rcpp::Named("gamma") = gamma_upd,
     Rcpp::Named("theta") = theta_upd,

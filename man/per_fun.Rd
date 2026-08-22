@@ -28,6 +28,7 @@ per_fun(
   max_iter_per = 100,
   tol_per = 1e-06,
   add_correc_CiS = 0.001,
+  include_sigma = FALSE,
   update_sigma = TRUE,
   fixed_sigma = 1,
   beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
@@ -81,7 +82,9 @@ per_fun(
 
 \item{add_correc_CiS}{Correction factor for CiS (default: 1e-3)}
 
-\item{update_sigma}{Binary. Update the parameter sigma or not; if not, it is fixed throughout estimation process (default: TRUE)}
+\item{include_sigma}{Binary. Include the parameter sigma in the estimation or not; if not, sigma = 1 throughout estimation process (default: FALSE)}
+
+\item{update_sigma}{Binary. Update the parameter sigma or not; if not, sigma = fixed_sigma throughout estimation process (default: TRUE)}
 
 \item{fixed_sigma}{A fixed sigma value in estimation if update_sigma = FALSE (default: 1.0)}
 

@@ -435,7 +435,8 @@ wrapper_gamma <- function(gamma_upd, nu, error_lk, hyper_c, hyper_d,
 #' @param hyper_b_theta the shape hyperparameter b in theta's beta prior (default: the number of predictors)
 #' @param max_iter Maximum number of iterations (default: 100)
 #' @param tol Convergence tolerance (default: 1e-6)
-#' @param update_sigma Binary. Update the parameter sigma or not; if not, it is fixed throughout estimation process (default: TRUE)
+#' @param include_sigma Binary. Include the parameter sigma in the estimation or not; if not, sigma = 1 throughout estimation process (default: FALSE)
+#' @param update_sigma Binary. Update the parameter sigma or not; if not, sigma = fixed_sigma throughout estimation process (default: TRUE)
 #' @param fixed_sigma A fixed sigma value in estimation if update_sigma = FALSE (default: 1.0)
 #' @param conv_type Convergence type (default: "param")
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
@@ -464,6 +465,7 @@ TDVS_EM <- function(
     hyper_b_theta = -1.0,
     max_iter = 100,
     tol = 1e-6,
+    include_sigma = FALSE,
     update_sigma = TRUE,
     fixed_sigma = 1.0,
     conv_type = "param",
@@ -504,6 +506,7 @@ TDVS_EM <- function(
     hyper_b_theta = hyper_b_theta,
     max_iter = max_iter,
     tol = tol,
+    include_sigma = include_sigma,
     update_sigma = update_sigma,
     fixed_sigma = fixed_sigma,
     conv_type = conv_type
@@ -590,7 +593,8 @@ CiS_j_fun <- function(test_index,
 #' @param max_iter_per Maximum number of iterations (default: 100)
 #' @param tol_per Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
-#' @param update_sigma Binary. Update the parameter sigma or not; if not, it is fixed throughout estimation process (default: TRUE)
+#' @param include_sigma Binary. Include the parameter sigma in the estimation or not; if not, sigma = 1 throughout estimation process (default: FALSE)
+#' @param update_sigma Binary. Update the parameter sigma or not; if not, sigma = fixed_sigma throughout estimation process (default: TRUE)
 #' @param fixed_sigma A fixed sigma value in estimation if update_sigma = FALSE (default: 1.0)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
 #' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
@@ -619,6 +623,7 @@ per_fun <- function(j_index,
                     max_iter_per = 100,
                     tol_per = 1e-6,
                     add_correc_CiS = 0.001,
+                    include_sigma = FALSE,
                     update_sigma = TRUE,
                     fixed_sigma = 1.0,
                     beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
@@ -660,6 +665,7 @@ per_fun <- function(j_index,
     max_iter_per = max_iter_per,
     tol_per = tol_per,
     add_correc_CiS = add_correc_CiS,
+    include_sigma = include_sigma,
     update_sigma = update_sigma,
     fixed_sigma = fixed_sigma
   )
@@ -723,7 +729,8 @@ CiS_group_fun <- function(test_indices,
 #' @param max_iter_per Maximum number of iterations (default: 100)
 #' @param tol_per Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
-#' @param update_sigma Binary. Update the parameter sigma or not; if not, it is fixed throughout estimation process (default: TRUE)
+#' @param include_sigma Binary. Include the parameter sigma in the estimation or not; if not, sigma = 1 throughout estimation process (default: FALSE)
+#' @param update_sigma Binary. Update the parameter sigma or not; if not, sigma = fixed_sigma throughout estimation process (default: TRUE)
 #' @param fixed_sigma A fixed sigma value in estimation if update_sigma = FALSE (default: 1.0)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
 #' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
@@ -752,6 +759,7 @@ per_group_fun <- function(j_indices,
                           max_iter_per = 100,
                           tol_per = 1e-6,
                           add_correc_CiS = 0.001,
+                          include_sigma = FALSE,
                           update_sigma = TRUE,
                           fixed_sigma = 1.0,
                           beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
@@ -793,6 +801,7 @@ per_group_fun <- function(j_indices,
     max_iter_per = max_iter_per,
     tol_per = tol_per,
     add_correc_CiS = add_correc_CiS,
+    include_sigma = include_sigma,
     update_sigma = update_sigma,
     fixed_sigma = fixed_sigma
   )
@@ -824,7 +833,8 @@ per_group_fun <- function(j_indices,
 #' @param max_iter_TDVS Maximum number of iterations (default: 100)
 #' @param tol_TDVS Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
-#' @param update_sigma Binary. Update the parameter sigma or not; if not, it is fixed throughout estimation process (default: TRUE)
+#' @param include_sigma Binary. Include the parameter sigma in the estimation or not; if not, sigma = 1 throughout estimation process (default: FALSE)
+#' @param update_sigma Binary. Update the parameter sigma or not; if not, sigma = fixed_sigma throughout estimation process (default: TRUE)
 #' @param fixed_sigma A fixed sigma value in estimation if update_sigma = FALSE (default: 1.0)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
 #' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
@@ -855,6 +865,7 @@ TDVS <- function(
     max_iter_TDVS = 100,
     tol_TDVS = 1e-6,
     add_correc_CiS = 0.001,
+    include_sigma = FALSE,
     update_sigma = TRUE,
     fixed_sigma = 1.0,
     beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
@@ -897,6 +908,7 @@ TDVS <- function(
     max_iter_TDVS = max_iter_TDVS,
     tol_TDVS = tol_TDVS,
     add_correc_CiS = add_correc_CiS,
+    include_sigma = include_sigma,
     update_sigma = update_sigma,
     fixed_sigma = fixed_sigma
   )
@@ -929,7 +941,8 @@ TDVS <- function(
 #' @param max_iter_TDVS Maximum number of iterations (default: 100)
 #' @param tol_TDVS Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
-#' @param update_sigma Binary. Update the parameter sigma or not; if not, it is fixed throughout estimation process (default: TRUE)
+#' @param include_sigma Binary. Include the parameter sigma in the estimation or not; if not, sigma = 1 throughout estimation process (default: FALSE)
+#' @param update_sigma Binary. Update the parameter sigma or not; if not, sigma = fixed_sigma throughout estimation process (default: TRUE)
 #' @param fixed_sigma A fixed sigma value in estimation if update_sigma = FALSE (default: 1.0)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
 #' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
@@ -961,6 +974,7 @@ TDVS_j <- function(
     max_iter_TDVS = 100,
     tol_TDVS = 1e-6,
     add_correc_CiS = 0.001,
+    include_sigma = FALSE,
     update_sigma = TRUE,
     fixed_sigma = 1.0,
     beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
@@ -1004,6 +1018,7 @@ TDVS_j <- function(
     max_iter_TDVS = max_iter_TDVS,
     tol_TDVS = tol_TDVS,
     add_correc_CiS = add_correc_CiS,
+    include_sigma = include_sigma,
     update_sigma = update_sigma,
     fixed_sigma = fixed_sigma
   )
@@ -1036,7 +1051,8 @@ TDVS_j <- function(
 #' @param max_iter_TDVS Maximum number of iterations (default: 100)
 #' @param tol_TDVS Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
-#' @param update_sigma Binary. Update the parameter sigma or not; if not, it is fixed throughout estimation process (default: TRUE)
+#' @param include_sigma Binary. Include the parameter sigma in the estimation or not; if not, sigma = 1 throughout estimation process (default: FALSE)
+#' @param update_sigma Binary. Update the parameter sigma or not; if not, sigma = fixed_sigma throughout estimation process (default: TRUE)
 #' @param fixed_sigma A fixed sigma value in estimation if update_sigma = FALSE (default: 1.0)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
 #' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
@@ -1068,6 +1084,7 @@ TDVS_group <- function(
     max_iter_TDVS = 100,
     tol_TDVS = 1e-6,
     add_correc_CiS = 0.001,
+    include_sigma = FALSE,
     update_sigma = TRUE,
     fixed_sigma= 1.0,
     beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
@@ -1111,6 +1128,7 @@ TDVS_group <- function(
     max_iter_TDVS = max_iter_TDVS,
     tol_TDVS = tol_TDVS,
     add_correc_CiS = add_correc_CiS,
+    include_sigma = include_sigma,
     update_sigma = update_sigma,
     fixed_sigma = fixed_sigma
   )
@@ -1147,7 +1165,8 @@ TDVS_group <- function(
 #' @param max_iter_TDVS Maximum number of iterations (default: 100)
 #' @param tol_TDVS Convergence tolerance (default: 1e-6)
 #' @param add_correc_CiS Correction factor for CiS (default: 1e-3)
-#' @param update_sigma Binary. Update the parameter sigma or not; if not, it is fixed throughout estimation process (default: TRUE)
+#' @param include_sigma Binary. Include the parameter sigma in the estimation or not; if not, sigma = 1 throughout estimation process (default: FALSE)
+#' @param update_sigma Binary. Update the parameter sigma or not; if not, sigma = fixed_sigma throughout estimation process (default: TRUE)
 #' @param fixed_sigma A fixed sigma value in estimation if update_sigma = FALSE (default: 1.0)
 #' @param beta_method Optimization method for beta updates ("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"). Defaults to "nlm".
 #' @param exclude_beta_method Optimization method for parameters other than beta ("BFGS", "nlm", "BFGS_nogra"). Defaults to "BFGS".
@@ -1183,6 +1202,7 @@ TDVS_multi_stage <- function(
     max_iter_TDVS = 100,
     tol_TDVS = 1e-6,
     add_correc_CiS = 0.001,
+    include_sigma = FALSE,
     update_sigma = TRUE,
     fixed_sigma = 1.0,
     beta_method = c("nlm", "optim", "maxLik", "cd_nlm", "cd_maxLik"),
@@ -1230,6 +1250,7 @@ TDVS_multi_stage <- function(
     max_iter_TDVS = max_iter_TDVS,
     tol_TDVS = tol_TDVS,
     add_correc_CiS = add_correc_CiS,
+    include_sigma = include_sigma,
     update_sigma = update_sigma,
     fixed_sigma = fixed_sigma
   )

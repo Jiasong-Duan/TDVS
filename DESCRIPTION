@@ -1,6 +1,6 @@
 Package: TDVS
 Title: Testing-driven Variable Selection in Bayesian Modal Regression (TDVS)
-Version: 0.3.0
+Version: 0.3.3
 Authors@R: c(
     person(given = "Jiasong", family = "Duan", email = "jiasong@email.sc.edu", role = c("aut", "cre")),
     person(given = "Xianzheng", family = "Huang", email = "huang@stat.sc.edu", role = c("aut")),

@@ -36,12 +36,18 @@ Rcpp::List TDVS_cpp(
     int max_iter_TDVS,
     double tol_TDVS,
     double add_correc_CiS,
+    bool include_sigma,
     bool update_sigma,
     double fixed_sigma) {
 
   arma::vec dat_Y = dataXY["Y"];
   arma::mat dat_X = dataXY["X"];
   int p = dat_X.n_cols;
+
+  if (!include_sigma) {
+    update_sigma = false;
+    fixed_sigma = 1.0;
+  }
 
   // Check if hyper_b_theta was provided
   double hyper_b_theta_val = (hyper_b_theta_TDVS < 0) ? p : hyper_b_theta_TDVS;
@@ -50,7 +56,7 @@ Rcpp::List TDVS_cpp(
   Rcpp::List em_orig = TDVS_EM_cpp(dataXY, init_beta_TDVS, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                   SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                   hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, update_sigma, fixed_sigma);
+                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, include_sigma, update_sigma, fixed_sigma);
 
   arma::vec pvals(p, arma::fill::zeros);
   std::vector<int> final_selected;
@@ -81,7 +87,7 @@ Rcpp::List TDVS_cpp(
                                     dataXY, init_beta_TDVS, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                     SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                     hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                    hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, update_sigma, fixed_sigma);
+                                    hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, include_sigma, update_sigma, fixed_sigma);
 
       if (CiS_perm >= CiS_orig) count++;
     }
@@ -99,6 +105,8 @@ Rcpp::List TDVS_cpp(
     Rcpp::Named("beta_estimates") = Rcpp::as<arma::vec>(em_orig["beta"]),
     Rcpp::Named("beta0_estimate") = Rcpp::as<double>(em_orig["beta0"]),
     Rcpp::Named("sigma_estimate") = Rcpp::as<double>(em_orig["sigma"]),
+    Rcpp::Named("include_sigma") = include_sigma,
+    Rcpp::Named("update_sigma") = update_sigma,
     Rcpp::Named("nu_estimate") = Rcpp::as<double>(em_orig["nu"]),
     Rcpp::Named("gamma_estimate") = Rcpp::as<double>(em_orig["gamma"]),
     Rcpp::Named("selected_indices") = final_selected_1based,
@@ -133,12 +141,18 @@ Rcpp::List TDVS_j_cpp(
     int max_iter_TDVS,
     double tol_TDVS,
     double add_correc_CiS,
+    bool include_sigma,
     bool update_sigma,
     double fixed_sigma) {
 
   arma::vec dat_Y = dataXY["Y"];
   arma::mat dat_X = dataXY["X"];
   int p = dat_X.n_cols;
+
+  if (!include_sigma) {
+    update_sigma = false;
+    fixed_sigma = 1.0;
+  }
 
   // Check if test_index is within valid bounds (1-based to 0-based conversion)
   if (test_index < 1 || test_index > p) {
@@ -156,7 +170,7 @@ Rcpp::List TDVS_j_cpp(
   Rcpp::List em_orig = TDVS_EM_cpp(dataXY, init_beta_TDVS, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                   SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                   hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, update_sigma, fixed_sigma);
+                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, include_sigma, update_sigma, fixed_sigma);
 
   arma::uvec test_j = {static_cast<unsigned int>(test_index)};
 
@@ -180,7 +194,7 @@ Rcpp::List TDVS_j_cpp(
                                   dataXY, init_beta_TDVS, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                   SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                   hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, update_sigma, fixed_sigma);
+                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, include_sigma, update_sigma, fixed_sigma);
 
     if (CiS_perm >= CiS_orig) count++;
   }
@@ -190,6 +204,8 @@ Rcpp::List TDVS_j_cpp(
     Rcpp::Named("beta_j_estimate") = Rcpp::as<arma::vec>(em_orig["beta"])[test_index-1],
     Rcpp::Named("beta0_estimate") = Rcpp::as<double>(em_orig["beta0"]),
     Rcpp::Named("sigma_estimate") = Rcpp::as<double>(em_orig["sigma"]),
+    Rcpp::Named("include_sigma") = include_sigma,
+    Rcpp::Named("update_sigma") = update_sigma,
     Rcpp::Named("nu_estimate") = Rcpp::as<double>(em_orig["nu"]),
     Rcpp::Named("gamma_estimate") = Rcpp::as<double>(em_orig["gamma"]),
     Rcpp::Named("index_j") = test_index,
@@ -224,12 +240,18 @@ Rcpp::List TDVS_group_cpp(
     int max_iter_TDVS,
     double tol_TDVS,
     double add_correc_CiS,
+    bool include_sigma,
     bool update_sigma,
     double fixed_sigma) {
 
   arma::vec dat_Y = dataXY["Y"];
   arma::mat dat_X = dataXY["X"];
   int p = dat_X.n_cols;
+
+  if (!include_sigma) {
+    update_sigma = false;
+    fixed_sigma = 1.0;
+  }
 
   double min_test_index = min(test_indices);
   double max_test_index = max(test_indices);
@@ -249,7 +271,7 @@ Rcpp::List TDVS_group_cpp(
   Rcpp::List em_orig = TDVS_EM_cpp(dataXY, init_beta_TDVS, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                   SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                   hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, update_sigma, fixed_sigma);
+                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, include_sigma, update_sigma, fixed_sigma);
   arma::vec beta_orig = em_orig["beta"];
   double beta0_orig = em_orig["beta0"];
   double sigma_orig = em_orig["sigma"];
@@ -269,7 +291,7 @@ Rcpp::List TDVS_group_cpp(
                                   dataXY, init_beta_TDVS, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                   SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                   hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, update_sigma, fixed_sigma);
+                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, include_sigma, update_sigma, fixed_sigma);
 
     if (CiS_perm >= CiS_orig) count++;
   }
@@ -279,6 +301,8 @@ Rcpp::List TDVS_group_cpp(
     Rcpp::Named("beta_group_estimate") = arma::vec(beta_orig.elem(test_indices-1)),
     Rcpp::Named("beta0_estimate") = beta0_orig,
     Rcpp::Named("sigma_estimate") = sigma_orig,
+    Rcpp::Named("include_sigma") = include_sigma,
+    Rcpp::Named("update_sigma") = update_sigma,
     Rcpp::Named("nu_estimate") = nu_orig,
     Rcpp::Named("gamma_estimate") = gamma_orig,
     Rcpp::Named("test_indices") = test_indices,
@@ -317,6 +341,7 @@ Rcpp::List TDVS_multi_stage_cpp(
     int max_iter_TDVS,
     double tol_TDVS,
     double add_correc_CiS,
+    bool include_sigma,
     bool update_sigma,
     double fixed_sigma) {
 
@@ -326,6 +351,11 @@ Rcpp::List TDVS_multi_stage_cpp(
   arma::vec final_pvals(p, arma::fill::value(-1.0)); // initialize with -1
   std::vector<int> final_selected;
 
+  if (!include_sigma) {
+    update_sigma = false;
+    fixed_sigma = 1.0;
+  }
+
   // Check if hyper_b_theta was provided
   double hyper_b_theta_val = (hyper_b_theta_TDVS < 0) ? p : hyper_b_theta_TDVS;
 
@@ -333,7 +363,7 @@ Rcpp::List TDVS_multi_stage_cpp(
   Rcpp::List em_orig = TDVS_EM_cpp(dataXY, init_beta_TDVS, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                   SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                   hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, update_sigma, fixed_sigma);
+                                  hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, include_sigma, update_sigma, fixed_sigma);
   arma::vec beta_orig = em_orig["beta"];
   double beta0_orig = em_orig["beta0"];
   double sigma_orig = em_orig["sigma"];
@@ -355,7 +385,7 @@ Rcpp::List TDVS_multi_stage_cpp(
                                           dataXY, init_beta_TDVS, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                           SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                           hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                          hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, update_sigma, fixed_sigma);
+                                          hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, include_sigma, update_sigma, fixed_sigma);
 
       if (perm_CiS >= CiS_orig) count++;
     }
@@ -373,6 +403,8 @@ Rcpp::List TDVS_multi_stage_cpp(
       Rcpp::Named("beta_estimates") = beta_orig,
       Rcpp::Named("beta0_estimate") = beta0_orig,
       Rcpp::Named("sigma_estimate") = sigma_orig,
+      Rcpp::Named("include_sigma") = include_sigma,
+      Rcpp::Named("update_sigma") = update_sigma,
       Rcpp::Named("nu_estimate") = nu_orig,
       Rcpp::Named("gamma_estimate") = gamma_orig,
       Rcpp::Named("selected_indices") = Rcpp::IntegerVector(0),
@@ -403,7 +435,7 @@ Rcpp::List TDVS_multi_stage_cpp(
                                     dataXY, init_beta_TDVS, init_beta0_TDVS, init_sigma_TDVS, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                     SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                     hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                    hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, update_sigma, fixed_sigma);
+                                    hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, include_sigma, update_sigma, fixed_sigma);
       if (perm_CiS >= CiS_orig) count++;
     }
 
@@ -420,6 +452,8 @@ Rcpp::List TDVS_multi_stage_cpp(
       Rcpp::Named("beta_estimates") = beta_orig,
       Rcpp::Named("beta0_estimate") = beta0_orig,
       Rcpp::Named("sigma_estimate") = sigma_orig,
+      Rcpp::Named("include_sigma") = include_sigma,
+      Rcpp::Named("update_sigma") = update_sigma,
       Rcpp::Named("nu_estimate") = nu_orig,
       Rcpp::Named("gamma_estimate") = gamma_orig,
       Rcpp::Named("selected_indices") = Rcpp::IntegerVector(0),
@@ -440,7 +474,7 @@ Rcpp::List TDVS_multi_stage_cpp(
                                     dataXY, init_beta_TDVS, init_beta0_TDVS, sigma_orig, init_nu_TDVS, init_gamma_TDVS, init_theta_TDVS,
                                     SS_t0_TDVS, SS_t1_TDVS, hyper_mu_beta0_TDVS, hyper_sigma_beta0_TDVS, hyper_nu_sigma_TDVS, hyper_A_sigma_TDVS,
                                     hyper_mu_nu_TDVS, hyper_sigma_nu_TDVS, hyper_c_gamma_TDVS, hyper_d_gamma_TDVS,
-                                    hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, update_sigma, fixed_sigma);
+                                    hyper_a_theta_TDVS, hyper_b_theta_val, max_iter_TDVS, tol_TDVS, add_correc_CiS, include_sigma, update_sigma, fixed_sigma);
       if (perm_CiS >= CiS_orig) count++;
     }
 
@@ -460,6 +494,8 @@ Rcpp::List TDVS_multi_stage_cpp(
     Rcpp::Named("beta_estimates") = beta_orig,
     Rcpp::Named("beta0_estimate") = beta0_orig,
     Rcpp::Named("sigma_estimate") = sigma_orig,
+    Rcpp::Named("include_sigma") = include_sigma,
+    Rcpp::Named("update_sigma") = update_sigma,
     Rcpp::Named("nu_estimate") = nu_orig,
     Rcpp::Named("gamma_estimate") = gamma_orig,
     Rcpp::Named("selected_indices") = final_selected_1based,
